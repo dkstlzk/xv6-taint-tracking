@@ -22,7 +22,7 @@
 #   Handbook §503–504 (Evidence convention): "git rev-parse HEAD, date,
 #   CPUS, riscv64-*-gcc --version, qemu-system-riscv64 --version, and
 #   the exact command line."
-#   Plan: A owns scripts/.  The header script is not named by the plan;
+#   Plan: A owns scripts/. The header script is not named by the plan;
 #   A is the natural owner (handbook §504, PROPT).
 #
 # Exit codes:
@@ -35,16 +35,17 @@
 set -euo pipefail
 
 # --- Locate the project root (the git repository) ----------------
-# This script lives in scripts/ inside the project repo.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # --- Locate the xv6 source tree -----------------------------------
-XV6_DIR="${XV6_DIR:-$PROJECT_ROOT/external/xv6-riscv}"
+if [ -d "$PROJECT_ROOT/kernel" ]; then
+    XV6_DIR="${XV6_DIR:-$PROJECT_ROOT}"
+else
+    XV6_DIR="${XV6_DIR:-$PROJECT_ROOT/external/xv6-riscv}"
+fi
 
 # --- Detect the cross-compiler prefix ----------------------------
-# The Makefile probes several prefixes.  We do the same here so the
-# header always shows the compiler the build would actually use.
 detect_toolprefix() {
     local prefixes=(
         riscv64-unknown-elf-
@@ -59,13 +60,13 @@ detect_toolprefix() {
             return
         fi
     done
-    echo "UNKNOWN-"
+    echo ""
 }
 
 TOOLPREFIX="$(detect_toolprefix)"
 
 # --- Gather values ------------------------------------------------
-COMMIT="$(cd "$PROJECT_ROOT" && git rev-parse HEAD 2>&1 || echo 'NOT A GIT REPO')"
+COMMIT="$(cd "$PROJECT_ROOT" && git rev-parse HEAD 2>/dev/null || echo 'NOT A GIT REPO')"
 DATE="$(date --iso-8601=seconds 2>/dev/null || date '+%Y-%m-%dT%H:%M:%S%z')"
 
 if [ -n "${CPUS:-}" ]; then
@@ -74,8 +75,17 @@ else
     CPUS_VAL="not set (default 3)"
 fi
 
-GCC_VERSION="$(${TOOLPREFIX}gcc --version 2>&1 | head -1 || echo 'NOT FOUND')"
-QEMU_VERSION="$(qemu-system-riscv64 --version 2>&1 | head -1 || echo 'NOT FOUND')"
+if [ -n "$TOOLPREFIX" ] && command -v "${TOOLPREFIX}gcc" &>/dev/null; then
+    GCC_VERSION="$("${TOOLPREFIX}gcc" --version 2>&1 | head -1)"
+else
+    GCC_VERSION="NOT FOUND (riscv64 compiler missing)"
+fi
+
+if command -v qemu-system-riscv64 &>/dev/null; then
+    QEMU_VERSION="$(qemu-system-riscv64 --version 2>&1 | head -1)"
+else
+    QEMU_VERSION="NOT FOUND (qemu-system-riscv64 missing)"
+fi
 
 COMMAND_LINE="${1:-<not specified>}"
 

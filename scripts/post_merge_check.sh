@@ -43,7 +43,11 @@ set -uo pipefail
 # ---- Configuration -----------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-XV6_DIR="${XV6_DIR:-$PROJECT_ROOT/external/xv6-riscv}"
+if [ -d "$PROJECT_ROOT/kernel" ]; then
+    XV6_DIR="${XV6_DIR:-$PROJECT_ROOT}"
+else
+    XV6_DIR="${XV6_DIR:-$PROJECT_ROOT/external/xv6-riscv}"
+fi
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-30}"
 SKIP_BOOT=0
 CPUS="${CPUS:-3}"

@@ -61,3 +61,7 @@ dkms.conf
 project_docs/OS project/
 project_docs/__MACOSX/
 project_docs/xv6_riscv_handbook_edition5.tex
+
+# PDFs & latex files
+*.pdf
+*.tex
