@@ -53,3 +53,11 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# External upstream source (local reference only)
+/external/xv6-riscv/
+
+# Extracted reference documentation (PDFs and reference TeX - local reference only)
+project_docs/OS project/
+project_docs/__MACOSX/
+project_docs/xv6_riscv_handbook_edition5.tex

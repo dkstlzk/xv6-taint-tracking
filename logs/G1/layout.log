@@ -1,0 +1,450 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       7283c5b121c66ea714a79bfc30825e7850307dc3
+DATE:         2026-10-26T11:54:37+00:00
+CPUS:         not set (default 3)
+GCC_VERSION:  riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      Day-1 Source Verification (layout.log)
+================================================================
+f780d7850765d74cbdcd1fff4b822d8829f7c9bd
+30-
+31-// On-disk inode structure
+32:struct dinode {
+33-  short type;              // File type
+34-  short major;             // Major device number (T_DEVICE only)
+35-  short minor;             // Minor device number (T_DEVICE only)
+36-  short nlink;             // Number of links to inode in file system
+37-  uint size;               // Size of file (bytes)
+38-  uint addrs[NDIRECT + 1]; // Data block addresses
+39-};
+40-
+41-// Inodes per block.
+42:#define IPB (BSIZE / sizeof(struct dinode))
+43-
+44-// Block containing inode i
+45-#define IBLOCK(i, sb) ((i) / IPB + sb.inodestart)
+46-
+47-// Bitmap bits per block
+48-#define BPB (BSIZE * 8)
+49-
+50-// Block of free map containing bit for block b
+51-#define BBLOCK(b, sb) ((b) / BPB + sb.bmapstart)
+52-
+53-// Directory is a file containing a sequence of dirent structures.
+54-#define DIRSIZ 14
+55-
+56-// The name field may have DIRSIZ characters and not end in a NUL
+kernel/fs.h:5:#define BSIZE   1024 // block size
+kernel/fs.h:26:#define NDIRECT   12
+kernel/fs.h:27:#define NINDIRECT (BSIZE / sizeof(uint))
+kernel/fs.h:28:#define MAXFILE   (NDIRECT + NINDIRECT)
+kernel/fs.h:38:  uint addrs[NDIRECT + 1]; // Data block addresses
+kernel/fs.h:42:#define IPB (BSIZE / sizeof(struct dinode))
+kernel/fs.h:45:#define IBLOCK(i, sb) ((i) / IPB + sb.inodestart)
+kernel/fs.h:48:#define BPB (BSIZE * 8)
+36:char zeroes[BSIZE];
+78:  char buf[BSIZE];
+88:  assert((BSIZE % sizeof(struct dinode)) == 0);
+89:  assert((BSIZE % sizeof(struct dirent)) == 0);
+172:  off = ((off / BSIZE) + 1) * BSIZE;
+184:  if (lseek(fsfd, sec * BSIZE, 0) != sec * BSIZE)
+186:  if (write(fsfd, buf, BSIZE) != BSIZE)
+193:  char buf[BSIZE];
+207:  char buf[BSIZE];
+220:  if (lseek(fsfd, sec * BSIZE, 0) != sec * BSIZE)
+222:  if (read(fsfd, buf, BSIZE) != BSIZE)
+243:  uchar buf[BSIZE];
+248:  bzero(buf, BSIZE);
+264:  char buf[BSIZE];
+272:    fbn = off / BSIZE;
+290:    n1 = min(n, (fbn + 1) * BSIZE - off);
+292:    bcopy(p, buf + off - (fbn * BSIZE), n1);
+ialloc(uint dev, short type)
+{
+  int inum;
+  struct buf *bp;
+  struct dinode *dip;
+
+  for (inum = 1; inum < sb.ninodes; inum++) {
+    bp = bread(dev, IBLOCK(inum, sb));
+    dip = (struct dinode *)bp->data + inum % IPB;
+    if (dip->type == 0) { // a free inode
+      memset(dip, 0, sizeof(*dip));
+      dip->type = type;
+      log_write(bp); // mark it allocated on the disk
+      brelse(bp);
+      return iget(dev, inum);
+    }
+    brelse(bp);
+  }
+  printk("ialloc: no inodes\n");
+  return 0;
+}
+#define T_DIR    1 // Directory
+#define T_FILE   2 // File
+#define T_DEVICE 3 // Device
+
+struct stat {
+  int dev;     // File system's disk device
+  uint ino;    // Inode number
+  short type;  // Type of file
+  short nlink; // Number of links to file
+  uint64 size; // Size of file in bytes
+};
+43-    end_op();
+44-    return -1;
+45-  }
+46:  ilock(ip);
+47-
+48-  // Read the ELF header.
+49-  if (readi(ip, 0, (uint64)&elf, 0, sizeof(elf)) != sizeof(elf))
+58:argint(int n, int *ip)
+kernel/file.h:29:  uint addrs[NDIRECT + 1];
+kernel/fs.c:413:// in blocks on the disk. The first NDIRECT block numbers
+kernel/fs.c:414:// are listed in ip->addrs[].  The next NINDIRECT blocks are
+kernel/fs.c:415:// listed in block ip->addrs[NDIRECT].
+kernel/fs.c:426:  if (bn < NDIRECT) {
+kernel/fs.c:435:  bn -= NDIRECT;
+kernel/fs.c:437:  if (bn < NINDIRECT) {
+kernel/fs.c:439:    if ((addr = ip->addrs[NDIRECT]) == 0) {
+kernel/fs.c:443:      ip->addrs[NDIRECT] = addr;
+kernel/fs.c:470:  for (i = 0; i < NDIRECT; i++) {
+kernel/fs.c:477:  if (ip->addrs[NDIRECT]) {
+kernel/fs.c:478:    bp = bread(ip->dev, ip->addrs[NDIRECT]);
+kernel/fs.c:480:    for (j = 0; j < NINDIRECT; j++) {
+kernel/fs.c:485:    bfree(ip->dev, ip->addrs[NDIRECT]);
+kernel/fs.c:486:    ip->addrs[NDIRECT] = 0;
+kernel/fs.c:551:  if (off + n > MAXFILE * BSIZE)
+kernel/fs.h:26:#define NDIRECT   12
+kernel/fs.h:27:#define NINDIRECT (BSIZE / sizeof(uint))
+kernel/fs.h:28:#define MAXFILE   (NDIRECT + NINDIRECT)
+kernel/fs.h:38:  uint addrs[NDIRECT + 1]; // Data block addresses
+kernel/kernel.asm:6895:  if (bn < NDIRECT) {
+kernel/kernel.asm:6917:  bn -= NDIRECT;
+kernel/kernel.asm:6921:  if (bn < NINDIRECT) {
+kernel/kernel.asm:6925:    if ((addr = ip->addrs[NDIRECT]) == 0) {
+kernel/kernel.asm:6936:      ip->addrs[NDIRECT] = addr;
+kernel/kernel.asm:7417:  for (i = 0; i < NDIRECT; i++) {
+kernel/kernel.asm:7435:  if (ip->addrs[NDIRECT]) {
+kernel/kernel.asm:7439:    bfree(ip->dev, ip->addrs[NDIRECT]);
+kernel/kernel.asm:7440:    ip->addrs[NDIRECT] = 0;
+kernel/kernel.asm:7457:    bp = bread(ip->dev, ip->addrs[NDIRECT]);
+kernel/kernel.asm:7461:    for (j = 0; j < NINDIRECT; j++) {
+kernel/kernel.asm:7477:    bfree(ip->dev, ip->addrs[NDIRECT]);
+kernel/kernel.asm:7481:    ip->addrs[NDIRECT] = 0;
+kernel/kernel.asm:7945:  if (off + n > MAXFILE * BSIZE)
+kernel/kernel.asm:12483:  features &= ~(1 << VIRTIO_RING_F_INDIRECT_DESC);
+kernel/virtio.h:48:#define VIRTIO_RING_F_INDIRECT_DESC 28
+kernel/virtio_disk.c:94:  features &= ~(1 << VIRTIO_RING_F_INDIRECT_DESC);
+user/usertests.asm:1160:  for (i = 0; i < MAXFILE; i++) {
+user/usertests.asm:1165:  for (i = 0; i < MAXFILE; i++) {
+user/usertests.asm:1178:  for (i = 0; i < MAXFILE; i++) {
+user/usertests.asm:1239:      if (n != MAXFILE) {
+user/usertests.asm:4601:    for (int i = 0; i < MAXFILE; i++) {
+user/usertests.c:593:  for (i = 0; i < MAXFILE; i++) {
+user/usertests.c:613:      if (n != MAXFILE) {
+user/usertests.c:3236:    for (int i = 0; i < MAXFILE; i++) {
+grep: mkfs/mkfs: binary file matches
+mkfs/mkfs.c:265:  uint indirect[NINDIRECT];
+mkfs/mkfs.c:273:    assert(fbn < MAXFILE);
+mkfs/mkfs.c:274:    if (fbn < NDIRECT) {
+mkfs/mkfs.c:280:      if (xint(din.addrs[NDIRECT]) == 0) {
+mkfs/mkfs.c:281:        din.addrs[NDIRECT] = xint(freeblock++);
+mkfs/mkfs.c:283:      rsect(xint(din.addrs[NDIRECT]), (char *)indirect);
+mkfs/mkfs.c:284:      if (indirect[fbn - NDIRECT] == 0) {
+mkfs/mkfs.c:285:        indirect[fbn - NDIRECT] = xint(freeblock++);
+mkfs/mkfs.c:286:        wsect(xint(din.addrs[NDIRECT]), (char *)indirect);
+mkfs/mkfs.c:288:      x = xint(indirect[fbn - NDIRECT]);
+kernel/exec.c:1:#include "types.h"
+kernel/exec.c:2:#include "param.h"
+kernel/exec.c:3:#include "memlayout.h"
+kernel/exec.c:4:#include "riscv.h"
+kernel/exec.c:5:#include "spinlock.h"
+kernel/exec.c:6:#include "proc.h"
+kernel/exec.c:7:#include "defs.h"
+kernel/exec.c:8:#include "elf.h"
+kernel/pipe.c:1:#include "types.h"
+kernel/pipe.c:2:#include "riscv.h"
+kernel/pipe.c:3:#include "defs.h"
+kernel/pipe.c:4:#include "param.h"
+kernel/pipe.c:5:#include "spinlock.h"
+kernel/pipe.c:6:#include "proc.h"
+kernel/pipe.c:7:#include "fs.h"
+kernel/pipe.c:8:#include "sleeplock.h"
+kernel/pipe.c:9:#include "file.h"
+4:OBJS = \
+94:$K/kernel: $(OBJS) $K/kernel.ld
+95:	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS)
+102:tags: $(OBJS)
+133:UPROGS=\
+155:fs.img: mkfs/mkfs README $(UPROGS)
+156:	mkfs/mkfs fs.img README $(UPROGS)
+163:	$K/kernel fs.img \
+166:	$(UPROGS)
+174:ifndef CPUS
+175:CPUS := 3
+178:QEMUOPTS = -machine virt -bios none -kernel $K/kernel -m 128M -smp $(CPUS) -nographic
+180:QEMUOPTS += -drive file=fs.img,if=none,format=raw,id=x0
+183:qemu: check-qemu-version $K/kernel fs.img
+189:qemu-gdb: $K/kernel .gdbinit fs.img
+sys_unlink(void)
+{
+  struct inode *ip, *dp;
+  struct dirent de;
+  char name[DIRSIZ], path[MAXPATH];
+  uint off;
+
+  if (argstr(0, path, MAXPATH) < 0)
+    return -1;
+
+  begin_op();
+  if ((dp = nameiparent(path, name)) == 0) {
+    end_op();
+    return -1;
+  }
+
+  ilock(dp);
+
+  // Cannot unlink "." or "..".
+  if (namecmp(name, ".") == 0 || namecmp(name, "..") == 0)
+    goto bad;
+
+  if ((ip = dirlookup(dp, name, &off)) == 0)
+    goto bad;
+  ilock(ip);
+
+  if (ip->nlink < 1)
+    panic("unlink: nlink < 1");
+  if (ip->type == T_DIR && !isdirempty(ip)) {
+    iunlockput(ip);
+    goto bad;
+  }
+
+  memset(&de, 0, sizeof(de));
+  if (writei(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+    panic("unlink: writei");
+  if (ip->type == T_DIR) {
+    dp->nlink--;
+    iupdate(dp);
+  }
+  iunlockput(dp);
+
+  ip->nlink--;
+  iupdate(ip);
+  iunlockput(ip);
+
+  end_op();
+
+  return 0;
+
+bad:
+  iunlockput(dp);
+  end_op();
+  return -1;
+}
+create(char *path, short type, short major, short minor)
+{
+  struct inode *ip, *dp;
+  char name[DIRSIZ];
+
+  if ((dp = nameiparent(path, name)) == 0)
+    return 0;
+
+  ilock(dp);
+
+  if (dp->nlink == 0) {
+    iunlockput(dp);
+    return 0;
+  }
+
+  // a new directory's ".." would push dp->nlink past its maximum
+  if (type == T_DIR && dp->nlink >= NLINK_MAX) {
+    iunlockput(dp);
+    return 0;
+  }
+
+  if ((ip = dirlookup(dp, name, 0)) != 0) {
+    iunlockput(dp);
+    ilock(ip);
+    if (type == T_FILE && (ip->type == T_FILE || ip->type == T_DEVICE))
+      return ip;
+    iunlockput(ip);
+    return 0;
+  }
+
+  if ((ip = ialloc(dp->dev, type)) == 0) {
+    iunlockput(dp);
+    return 0;
+  }
+
+  ilock(ip);
+  ip->major = major;
+  ip->minor = minor;
+  ip->nlink = 1;
+  iupdate(ip);
+
+  if (type == T_DIR) { // Create . and .. entries.
+    // No ip->nlink++ for ".": avoid cyclic ref count.
+    if (dirlink(ip, ".", ip->inum) < 0 || dirlink(ip, "..", dp->inum) < 0)
+      goto fail;
+  }
+
+  if (dirlink(dp, name, ip->inum) < 0)
+    goto fail;
+
+  if (type == T_DIR) {
+    // now that success is guaranteed:
+    dp->nlink++; // for ".."
+    iupdate(dp);
+  }
+
+  iunlockput(dp);
+
+  return ip;
+
+fail:
+  // something went wrong. de-allocate ip.
+  ip->nlink = 0;
+  iupdate(ip);
+  iunlockput(ip);
+  iunlockput(dp);
+  return 0;
+}
+sys_open(void)
+{
+  char path[MAXPATH];
+  int fd, omode;
+  struct file *f;
+  struct inode *ip;
+  int n;
+
+  argint(1, &omode);
+  if ((n = argstr(0, path, MAXPATH)) < 0)
+    return -1;
+
+  begin_op();
+
+  if (omode & O_CREATE) {
+    ip = create(path, T_FILE, 0, 0);
+    if (ip == 0) {
+      end_op();
+      return -1;
+    }
+  } else {
+    if ((ip = namei(path)) == 0) {
+      end_op();
+      return -1;
+    }
+    ilock(ip);
+    if (ip->type == T_DIR && omode != O_RDONLY) {
+      iunlockput(ip);
+      end_op();
+      return -1;
+    }
+  }
+
+  if (ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)) {
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }
+
+  if ((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0) {
+    if (f)
+      fileclose(f);
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }
+
+  if (ip->type == T_DEVICE) {
+    f->type = FD_DEVICE;
+    f->major = ip->major;
+  } else {
+    f->type = FD_INODE;
+    f->off = 0;
+  }
+  f->ip = ip;
+  f->readable = !(omode & O_WRONLY);
+  f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
+
+  if ((omode & O_TRUNC) && ip->type == T_FILE) {
+    itrunc(ip);
+  }
+
+  iunlock(ip);
+  end_op();
+
+  return fd;
+}
+fileread(struct file *f, uint64 addr, int n)
+{
+  int r = 0;
+
+  if (f->readable == 0 || n < 0)
+    return -1;
+
+  if (f->type == FD_PIPE) {
+    r = piperead(f->pipe, addr, n);
+  } else if (f->type == FD_DEVICE) {
+    if (f->major < 0 || f->major >= NDEV || !devsw[f->major].read)
+      return -1;
+    r = devsw[f->major].read(1, addr, n);
+  } else if (f->type == FD_INODE) {
+    ilock(f->ip);
+    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0)
+      f->off += r;
+    iunlock(f->ip);
+  } else {
+    panic("fileread");
+  }
+
+  return r;
+}
+filewrite(struct file *f, uint64 addr, int n)
+{
+  int r, ret = 0;
+
+  if (f->writable == 0 || n < 0)
+    return -1;
+
+  if (f->type == FD_PIPE) {
+    ret = pipewrite(f->pipe, addr, n);
+  } else if (f->type == FD_DEVICE) {
+    if (f->major < 0 || f->major >= NDEV || !devsw[f->major].write)
+      return -1;
+    ret = devsw[f->major].write(1, addr, n);
+  } else if (f->type == FD_INODE) {
+    // write a few blocks at a time to avoid exceeding
+    // the maximum log transaction size, including
+    // i-node, indirect block, allocation blocks,
+    // and 2 blocks of slop for non-aligned writes.
+    int max = ((MAXOPBLOCKS - 1 - 1 - 2) / 2) * BSIZE;
+    int i = 0;
+    while (i < n) {
+      int n1 = n - i;
+      if (n1 > max)
+        n1 = max;
+
+      begin_op();
+      ilock(f->ip);
+      if ((r = writei(f->ip, 1, addr + i, f->off, n1)) > 0)
+        f->off += r;
+      iunlock(f->ip);
+      end_op();
+
+      if (r != n1) {
+        // error from writei
+        break;
+      }
+      i += r;
+    }
+    ret = (i == n ? n : -1);
+  } else {
+    panic("filewrite");
+  }
+
+  return ret;
+}

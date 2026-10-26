@@ -1,0 +1,21 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       84a7111058c80831a7df90f584b4f804aa2eaa56
+DATE:         2026-10-26T13:51:53+00:00
+CPUS:         not set (default 3)
+GCC_VERSION:  riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      usertests bigdir (CPUS=1)
+================================================================
+
+=== RUNNING usertests bigdir ===
+xv6 kernel is booting
+init: starting sh
+$ usertests bigdir
+usertests starting
+test bigdir: OK
+ALL TESTS PASSED
+
+NOTE: Result transcribed from the interactive terminal output.
+The test was run against stock xv6 RISC-V with CPUS=1.

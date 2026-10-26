@@ -1,0 +1,35 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       84a7111058c80831a7df90f584b4f804aa2eaa56
+DATE:         2026-10-26T13:27:55+00:00
+CPUS:         1
+GCC_VERSION:  riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      usertests diskfull; usertests outofinodes (CPUS=1)
+================================================================
+=== RUNNING usertests diskfull ===
+
+xv6 kernel is booting
+
+init: starting sh
+$ usertests diskfull
+usertests starting
+test diskfull: balloc: out of blocks
+balloc: out of blocks
+balloc: out of blocks
+OK
+ALL TESTS PASSED
+$ QEMU: Terminated
+
+=== RUNNING usertests outofinodes ===
+
+xv6 kernel is booting
+
+init: starting sh
+$ usertests outofinodes
+usertests starting
+test outofinodes: ialloc: no inodes
+OK
+ALL TESTS PASSED
+$ QEMU: Terminated
