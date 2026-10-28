@@ -23,7 +23,7 @@ struct superblock {
 
 #define FSMAGIC 0x10203040
 
-#define NDIRECT   12
+#define NDIRECT   11
 #define NINDIRECT (BSIZE / sizeof(uint))
 #define MAXFILE   (NDIRECT + NINDIRECT)
 #define NLINK_MAX 32767 // nlink is a short; refuse links past its maximum
@@ -35,8 +35,10 @@ struct dinode {
   short minor;             // Minor device number (T_DEVICE only)
   short nlink;             // Number of links to inode in file system
   uint size;               // Size of file (bytes)
-  uint addrs[NDIRECT + 1]; // Data block addresses
+  uint untrusted;          // new: 1 = untrusted
+  uint addrs[NDIRECT + 1]; // Data block addresses (11 direct + 1 indirect)
 };
+_Static_assert(sizeof(struct dinode) == 64, "dinode size");
 
 // Inodes per block.
 #define IPB (BSIZE / sizeof(struct dinode))

@@ -26,6 +26,7 @@ struct inode {
   short minor;
   short nlink;
   uint size;
+  uint untrusted;          // copy of disk inode untrusted flag
   uint addrs[NDIRECT + 1];
 };
 

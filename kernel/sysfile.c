@@ -528,3 +528,11 @@ sys_pipe(void)
   }
   return 0;
 }
+
+// sys_marktaint stub (Member C, Task C-03)
+// Returns 0 without marking; replaced by real validation in C-05.
+uint64
+sys_marktaint(void)
+{
+  return 0;
+}
