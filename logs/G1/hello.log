@@ -1,0 +1,18 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       0ef7aa4
+DATE:         2026-10-26T22:29:29+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-unknown-elf-gcc 13.2.0 (cross-compilation target)
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      make qemu (Gate G1 Smoke Test: hello)
+================================================================
+
+xv6 kernel is booting
+
+init: starting sh
+$ hello
+hello 1 2 3 4
+sum = 10
+$ 

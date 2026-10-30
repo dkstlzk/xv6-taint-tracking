@@ -18,6 +18,7 @@ OBJS = \
   $K/trap.o \
   $K/syscall.o \
   $K/sysproc.o \
+	$K/taint.o \
   $K/bio.o \
   $K/fs.o \
   $K/log.o \
@@ -151,10 +152,18 @@ UPROGS=\
 	$U/_forphan\
 	$U/_dorphan\
 	$U/_sync\
-	$U/_atest\
+	# member B\
+	$U/_hello\
+	$U/_mark\
 	$U/_ttest\
+	# member C\
+	$U/_ftest\
+	# member D\
+	$U/_ptest\
+	# member A\
+	$U/_atest\
 
-fs.img: mkfs/mkfs README $(UPROGS)
+fs.img: mkfs/mkfs README kernel/fs.h $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)
 
 -include kernel/*.d user/*.d
