@@ -65,3 +65,27 @@ project_docs/xv6_riscv_handbook_edition5.tex
 # PDFs & latex files
 *.pdf
 *.tex
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# VS Code (optional)
+# .vscode/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+*~

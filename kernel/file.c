@@ -119,8 +119,12 @@ fileread(struct file *f, uint64 addr, int n)
     r = devsw[f->major].read(1, addr, n);
   } else if (f->type == FD_INODE) {
     ilock(f->ip);
-    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0)
+    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0) {
       f->off += r;
+      if (f->ip->untrusted) {
+        myproc()->tainted = 1;
+      }
+    }
     iunlock(f->ip);
   } else {
     panic("fileread");
@@ -159,6 +163,12 @@ filewrite(struct file *f, uint64 addr, int n)
 
       begin_op();
       ilock(f->ip);
+      if (myproc()->tainted && f->ip->type == T_FILE && !f->ip->untrusted) {
+        iunlock(f->ip);
+        end_op();
+        printk("taint: write refused for pid %d\n", myproc()->pid);
+        return -1;
+      }
       if ((r = writei(f->ip, 1, addr + i, f->off, n1)) > 0)
         f->off += r;
       iunlock(f->ip);
