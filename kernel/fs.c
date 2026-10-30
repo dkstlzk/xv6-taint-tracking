@@ -237,6 +237,7 @@ iupdate(struct inode *ip)
   dip->minor = ip->minor;
   dip->nlink = ip->nlink;
   dip->size = ip->size;
+  dip->untrusted = ip->untrusted;
   memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
   log_write(bp);
   brelse(bp);
@@ -310,6 +311,7 @@ ilock(struct inode *ip)
     ip->minor = dip->minor;
     ip->nlink = dip->nlink;
     ip->size = dip->size;
+    ip->untrusted = dip->untrusted;
     memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
     brelse(bp);
     ip->valid = 1;
@@ -362,6 +364,7 @@ iput(struct inode *ip)
     acquiresleep(&ip->lock);
     release(&itable.lock);
 
+    ip->untrusted = 0;
     itrunc(ip); // free the data blocks (type stays nonzero on disk)
     ip->valid = 0;
 

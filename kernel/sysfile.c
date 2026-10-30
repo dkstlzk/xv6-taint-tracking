@@ -295,6 +295,9 @@ create(char *path, short type, short major, short minor)
   ip->major = major;
   ip->minor = minor;
   ip->nlink = 1;
+  if (myproc()->tainted) {
+    ip->untrusted = 1;
+  }
   iupdate(ip);
 
   if (type == T_DIR) { // Create . and .. entries.
@@ -529,10 +532,32 @@ sys_pipe(void)
   return 0;
 }
 
-// sys_marktaint stub (Member C, Task C-03)
-// Returns 0 without marking; replaced by real validation in C-05.
+// sys_marktaint implementation (Member C, Task C-05)
 uint64
 sys_marktaint(void)
 {
+  char path[MAXPATH];
+  struct inode *ip;
+
+  if (argstr(0, path, MAXPATH) < 0)
+    return -1;
+  if (path[0] == 0)
+    return -1;
+
+  begin_op();
+  if ((ip = namei(path)) == 0) {
+    end_op();
+    return -1;
+  }
+  ilock(ip);
+  if (ip->type != T_FILE) {
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }
+  ip->untrusted = 1;
+  iupdate(ip);
+  iunlockput(ip);
+  end_op();
   return 0;
 }
