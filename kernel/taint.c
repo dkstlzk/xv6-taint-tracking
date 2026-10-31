@@ -8,14 +8,40 @@
 #include "file.h"
 #include "defs.h"
 
-// Fail-closed stubs for Day 1 (Task D-02)
-// in_safe returns 0 so no program is considered inside /safe yet.
+// in_safe checks if the given inode is a direct child of /safe directory.
+// Preconditions: caller holds NO lock on ip.
 int
 in_safe(struct inode *ip)
 {
-  return 0;
+  struct inode *dp;
+  struct dirent de;
+  uint off;
+  int found = 0;
+
+  if ((dp = namei("/safe")) == 0)
+    return 0; // no /safe: nothing is safe
+
+  ilock(dp);
+  if (dp->type == T_DIR && dp->dev == ip->dev && dp->inum != ip->inum) {
+    for (off = 0; off < dp->size; off += sizeof(de)) {
+      if (readi(dp, 0, (uint64)&de, off, sizeof(de)) != sizeof(de))
+        panic("in_safe read");
+      if (de.inum == 0)
+        continue;
+      if (strncmp(de.name, ".", DIRSIZ) == 0 || strncmp(de.name, "..", DIRSIZ) == 0)
+        continue;
+      if (de.inum == ip->inum) {
+        found = 1;
+        break;
+      }
+    }
+  }
+  iunlockput(dp);
+  return found;
 }
 
+// ip_untrusted checks if inode is untrusted.
+// Preconditions: caller holds ip->lock.
 int
 ip_untrusted(struct inode *ip)
 {

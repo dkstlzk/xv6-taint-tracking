@@ -17,6 +17,8 @@ struct pipe {
   uint nwrite;   // number of bytes written
   int readopen;  // read fd is still open
   int writeopen; // write fd is still open
+  uint tainted_hi; // high watermark of tainted byte offsets
+  int has_taint;   // non-zero if pipe ever carried tainted data
 };
 
 int
@@ -34,6 +36,8 @@ pipealloc(struct file **f0, struct file **f1)
   pi->writeopen = 1;
   pi->nwrite = 0;
   pi->nread = 0;
+  pi->tainted_hi = 0;
+  pi->has_taint = 0;
   initlock(&pi->lock, "pipe");
   (*f0)->type = FD_PIPE;
   (*f0)->readable = 1;
@@ -99,6 +103,10 @@ pipewrite(struct pipe *pi, uint64 addr, int n)
         break;
       }
       pi->data[pi->nwrite++ % PIPESIZE] = ch;
+      if (pr->tainted) {
+        pi->has_taint = 1;
+        pi->tainted_hi = pi->nwrite;
+      }
       i++;
     }
   }
@@ -126,6 +134,7 @@ piperead(struct pipe *pi, uint64 addr, int n)
     sleep();
     acquire(&pi->lock);
   }
+  int taints = pi->has_taint && (int)(pi->tainted_hi - pi->nread) > 0;
   for (i = 0; i < n; i++) { //DOC: piperead-copy
     if (pi->nread == pi->nwrite)
       break;
@@ -136,6 +145,9 @@ piperead(struct pipe *pi, uint64 addr, int n)
       break;
     }
     pi->nread++;
+  }
+  if (i > 0 && taints) {
+    pr->tainted = 1;
   }
   wakeup(&pi->nwrite); //DOC: piperead-wakeup
   release(&pi->lock);
