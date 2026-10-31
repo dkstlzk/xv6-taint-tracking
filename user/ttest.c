@@ -102,6 +102,42 @@ test_t3_read_latch(void)
   CHECK("T3", "positive-byte read taints while zero-byte read does not", t0 == 0 && n > 0 && t1 == 1);
 }
 
+
+void
+test_t11a_write_clean_fd_after_taint(void)
+{
+  // 1. Open a clean file for writing while process is clean
+  int clean_fd = open("/clean_t11a.txt", O_CREATE | O_WRONLY);
+  if (clean_fd < 0) {
+    CHECK("T11a", "create clean file", 0);
+    return;
+  }
+
+  // 2. Taint process by reading untrusted file
+  int ufd = open("/untrusted_t11a.txt", O_CREATE | O_WRONLY);
+  write(ufd, "taint", 5);
+  close(ufd);
+  marktaint("/untrusted_t11a.txt");
+
+  ufd = open("/untrusted_t11a.txt", O_RDONLY);
+  char buf[8];
+  read(ufd, buf, 5);
+  close(ufd);
+
+  int t = istainted();
+  if (t != 1) {
+    close(clean_fd);
+    CHECK("T11a", "process became tainted", 0);
+    return;
+  }
+
+  // 3. Write to the previously opened clean fd -> MUST fail (-1)
+  int w = write(clean_fd, "malicious", 9);
+  close(clean_fd);
+
+  CHECK("T11a", "write via FD opened while clean is refused after process becomes tainted", w < 0);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -109,6 +145,7 @@ main(int argc, char *argv[])
   run_in_child(test_t1_fresh_clean);
   run_in_child(test_t4_fork_inheritance);
   run_in_child(test_t3_read_latch);
+  run_in_child(test_t11a_write_clean_fd_after_taint);
   tlib_summary();
   exit(0);
 }
