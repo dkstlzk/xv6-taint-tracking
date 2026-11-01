@@ -126,6 +126,11 @@ sys_link(void)
   char name[DIRSIZ], new[MAXPATH], old[MAXPATH];
   struct inode *dp, *ip;
 
+  if (myproc()->tainted) {
+    printk("taint: link refused for pid %d\n", myproc()->pid);
+    return -1;
+  }
+
   if (argstr(0, old, MAXPATH) < 0 || argstr(1, new, MAXPATH) < 0)
     return -1;
 
@@ -205,6 +210,11 @@ sys_unlink(void)
   struct dirent de;
   char name[DIRSIZ], path[MAXPATH];
   uint off;
+
+  if (myproc()->tainted) {
+    printk("taint: unlink refused for pid %d\n", myproc()->pid);
+    return -1;
+  }
 
   if (argstr(0, path, MAXPATH) < 0)
     return -1;
@@ -365,6 +375,15 @@ sys_open(void)
   if (ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)) {
     iunlockput(ip);
     end_op();
+    return -1;
+  }
+
+  // Task C-07: sys_open write gate (must precede itrunc)
+  if (myproc()->tainted && ip->type == T_FILE && !ip->untrusted &&
+      (omode & (O_WRONLY | O_RDWR | O_TRUNC))) {
+    iunlockput(ip);
+    end_op();
+    printk("taint: write refused for pid %d\n", myproc()->pid);
     return -1;
   }
 
