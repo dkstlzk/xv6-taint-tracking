@@ -1,0 +1,43 @@
+# Cross-Member Kernel Denial-Path Security Audit (logs/audit.md)
+
+Audit passes per CSL3030 Project 3 Plan (§13, §14) and Handbook Chapter 25.
+Each denial check is audited against the seven obligations:
+1. Locks held and properly released before returning.
+2. Transactions begun and closed via `end_op()`.
+3. Inode references dropped via `iput()` (or `iunlockput()` if locked).
+4. Memory buffers released.
+5. Canonical log string printed exactly once.
+6. Error code `-1` returned to user space.
+7. System invariants preserved.
+
+---
+
+## Pass 1: Member B Audits Member D Enforcement Sites (Task B-10)
+
+| Site | File & Line | Lock State on Refusal | Log String Emitted | Return Value | Status | Auditor Notes |
+|---|---|---|---|---|---|---|
+| Pre-lock exec check | `kernel/exec.c:51` | `ip` unlocked; `iput(ip)`, `end_op()` called | `taint: exec refused for pid %d\n` | `-1` | PASS | Avoids lock inversion with `/safe`; releases transaction before exit |
+| Post-lock exec check | `kernel/exec.c:62` | `ip` locked; `iunlockput(ip)`, `end_op()` called | `taint: exec refused for pid %d\n` | `-1` | PASS | Unlocks and decrements refcount properly; checks `T_FILE` & untrusted |
+| Directory containment | `kernel/taint.c:13` | No locks on entry; `dp` locked & released via `iunlockput(dp)` | None (helper query) | `0` or `1` | PASS | Explicitly skips `.`, `..` and rejects self-match `dp->inum == ip->inum` |
+| Pipe watermark tracking | `kernel/pipe.c:106` | `pi->lock` held during update and released | None | `i` or `-1` | PASS | Updates `tainted_hi` monotonically; reader check before copy preserves safety |
+
+---
+
+## Pass 2: Member C Audits Member B Enforcement Sites (Task C-12)
+
+| Site | File & Line | Lock State on Refusal | Log String Emitted | Return Value | Status | Auditor Notes |
+|---|---|---|---|---|---|---|
+| Filewrite write-down gate | `kernel/file.c:166` | `f->ip` locked; `iunlock(f->ip)`, `end_op()` called | `taint: write refused for pid %d\n` | `-1` | PASS | Proper lock and transaction cleanup on write denial; allows console & pipe |
+| Fileread taint latch | `kernel/file.c:124` | `f->ip` locked during check and update | None | bytes read | PASS | Only taints if `r > 0`; 0-byte read leaves process clean |
+
+---
+
+## Pass 3: Member D Audits Member C Enforcement Sites (Task D-10)
+
+| Site | File & Line | Lock State on Refusal | Log String Emitted | Return Value | Status | Auditor Notes |
+|---|---|---|---|---|---|---|
+| `sys_open` write gate | `kernel/sysfile.c:371` | `ip` locked; `iunlockput(ip)`, `end_op()` called | `taint: write refused for pid %d\n` | `-1` | PASS | Precedes `itrunc(ip)` preventing dirty truncation of clean file |
+| `sys_unlink` refusal | `kernel/sysfile.c:214` | Pre-transaction check; no locks held | `taint: unlink refused for pid %d\n` | `-1` | PASS | Refusal precedes `begin_op()`, zero log space wasted |
+| `sys_link` refusal (OH1) | `kernel/sysfile.c:129` | Pre-transaction check; no locks held | `taint: link refused for pid %d\n` | `-1` | PASS | Refusal precedes `begin_op()`, prevents hard link laundering |
+| `create()` born untrusted | `kernel/sysfile.c:298` | Inode locked during allocation and setup | None | `ip` | PASS | Sets `ip->untrusted = 1` in `ialloc` branch only; never re-labels existing file |
+| `sys_marktaint` | `kernel/sysfile.c:543` | `ip` locked; `iupdate(ip)`, `iunlockput(ip)`, `end_op()` | None | `0` or `-1` | PASS | Validates `T_FILE`, path length, non-empty; durable update |
