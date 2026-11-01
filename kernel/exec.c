@@ -6,6 +6,10 @@
 #include "proc.h"
 #include "defs.h"
 #include "elf.h"
+#include "stat.h"
+#include "sleeplock.h"
+#include "fs.h"
+#include "file.h"
 
 static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
 
@@ -43,7 +47,24 @@ kexec(char *path, char **argv)
     end_op();
     return -1;
   }
+
+  // Task D-05: pre-lock in_safe check
+  if (p->tainted && !in_safe(ip)) {
+    iput(ip);
+    end_op();
+    printk("taint: exec refused for pid %d\n", p->pid);
+    return -1;
+  }
+
   ilock(ip);
+
+  // Task D-05: post-lock type and untrusted checks
+  if (p->tainted && (ip->type != T_FILE || ip_untrusted(ip))) {
+    iunlockput(ip);
+    end_op();
+    printk("taint: exec refused for pid %d\n", p->pid);
+    return -1;
+  }
 
   // Read the ELF header.
   if (readi(ip, 0, (uint64)&elf, 0, sizeof(elf)) != sizeof(elf))
