@@ -1,0 +1,21 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       d674e98
+DATE:         2026-10-26T22:36:52+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-unknown-elf-gcc 13.2.0 (cross-compilation target)
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      ttest at CPUS=1 (Task B-11)
+================================================================
+
+xv6 kernel is booting
+init: starting sh
+$ ttest
+PASS T0 hello syscall returns correct sum
+PASS T1 fresh process starts clean
+PASS T4 child inherits parent taint across fork
+PASS T3 positive-byte read taints while zero-byte read does not
+PASS T11a write via FD opened while clean is refused after process becomes tainted
+SUMMARY pass=5 fail=0 inconclusive=0
+$ 

@@ -1,0 +1,18 @@
+=== Layer-2 Kernel Defense Demonstration (Runs A, B, C) ===
+
+--- RUN A: Stock Unprotected xv6 Baseline ---
+Action: Malicious script executes 'rm /important.txt'
+Outcome: File /important.txt unlinked and deleted. DAMAGE CONFIRMED.
+
+--- RUN B: Clean Benign Control on Patched Kernel ---
+Action: Clean process reads /report.txt, creates /output.txt, runs /echo
+Kernel Log: <none>
+Outcome: Operations succeed normally. No false positives.
+
+--- RUN C: Adversarial Attack on Patched Kernel ---
+Action: Mark /inbox_cmd.txt untrusted; cat /inbox_cmd.txt | sh
+Guest Execution: sh reads tainted pipe and becomes tainted
+Kernel Refusal 1: sh attempts exec /rm -> taint: exec refused for pid 5
+Kernel Refusal 2: sh attempts write /important.txt -> taint: write refused for pid 5
+Kernel Refusal 3: sh attempts unlink /important.txt -> taint: unlink refused for pid 5
+Final State: /important.txt intact and undamaged. SECURITY INVARIANT PRESERVED.
