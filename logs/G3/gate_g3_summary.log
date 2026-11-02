@@ -1,0 +1,19 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       c809b57
+DATE:         2026-10-26T22:36:13+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-unknown-elf-gcc 13.2.0 (cross-compilation target)
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      Gate G3 Initial Enforcement Verification
+================================================================
+
+Summary of Gate G3 Deliverables:
+1. Member A: QEMU bridge core, persistent disk checksums, 10 bridge tests in test_bridge.py, lab image script, 8-field agent trace and Layer-1 injection demo in demo_agent.py.
+2. Member B: T11a clean-open-then-tainted write refusal in ttest.c; cross-member audit pass #1 of Member D's enforcement sites.
+3. Member C: sys_open write gate before itrunc, sys_unlink and sys_link refusals with canonical logs, filesystem tests T5, T9, T11b, T16, T18, T19, and T13 in ftest.c; audit pass #1 of B's file.c sites.
+4. Member D: Pre-lock in_safe and post-lock untrusted kexec containment in exec.c; ptest cases T8 mixed writers, T14 dup, T10 exec containment, T12 taint survival, T20 directory self-match refusal, and concurrent stress test; audit pass #1 of C's sysfile.c sites.
+
+All initial enforcement sites audited against the 7 obligations in logs/audit.md.
+Gate G3 status: PASSED.
