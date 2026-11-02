@@ -1,0 +1,25 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       eef27c5
+DATE:         2026-10-26T22:36:58+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-unknown-elf-gcc 13.2.0 (cross-compilation target)
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      ftest at CPUS=1 (Task C-13)
+================================================================
+
+xv6 kernel is booting
+init: starting sh
+$ ftest
+PASS T5 file created by tainted caller is born untrusted on disk
+PASS T9 tainted process unlink is refused with -1
+PASS T9 file survives denied unlink
+PASS T11b tainted open for WRONLY on clean file is refused
+PASS T16 marktaint returns -1 on missing, empty, or directory path
+PASS T18 tainted open with O_TRUNC on clean file refused
+PASS T18 contents unchanged after denied O_TRUNC open
+PASS T19 tainted open with O_RDWR on clean file refused
+PASS T13 reused inode is initialized clean
+SUMMARY pass=9 fail=0 inconclusive=0
+$ 
