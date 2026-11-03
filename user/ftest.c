@@ -4,195 +4,176 @@
 #include "user/user.h"
 #include "user/tlib.h"
 
-// user/ftest.c — Filesystem taint enforcement test suite (Member C)
-// Tests: T5, T9, T11b, T16, T18, T19, and T13 (inode reuse)
+static void
+require(int condition)
+{
+  if (!condition) {
+    fprintf(2, "ftest: setup failed\n");
+    exit(1);
+  }
+}
 
 static void
-taint_myself(void)
+put(char *path, char *text)
 {
-  int fd = open("/untrusted_ftest_seed.txt", O_CREATE | O_WRONLY);
-  write(fd, "bad", 3);
-  close(fd);
-  marktaint("/untrusted_ftest_seed.txt");
-  fd = open("/untrusted_ftest_seed.txt", O_RDONLY);
-  char buf[4];
-  read(fd, buf, 3);
+  int fd = open(path, O_CREATE | O_WRONLY | O_TRUNC);
+  require(fd >= 0);
+  require(write(fd, text, strlen(text)) == strlen(text));
   close(fd);
 }
 
-// T5: create by tainted caller is born untrusted
-void
-test_t5_create_born_untrusted(void)
+static int
+equals(char *path, char *text)
 {
-  taint_myself();
-  int fd = open("/t5_created.txt", O_CREATE | O_WRONLY);
-  if (fd < 0) {
-    CHECK("T5", "create file by tainted caller", 0);
-    return;
-  }
-  write(fd, "data", 4);
+  char data[80];
+  int fd = open(path, O_RDONLY);
+  if (fd < 0)
+    return 0;
+  int count = read(fd, data, sizeof(data));
   close(fd);
-
-  // Clean child reads it and checks if it becomes tainted
-  int pid = fork();
-  if (pid == 0) {
-    int rfd = open("/t5_created.txt", O_RDONLY);
-    char buf[8];
-    read(rfd, buf, 4);
-    close(rfd);
-    exit(istainted() == 1 ? 0 : 1);
-  } else {
-    int status;
-    wait(&status);
-    CHECK("T5", "file created by tainted caller is born untrusted on disk", status == 0);
-  }
+  return count == strlen(text) && memcmp(data, text, count) == 0;
 }
 
-// T9: tainted caller cannot unlink
-void
-test_t9_unlink_refused(void)
+static void
+taint(void)
 {
-  int fd = open("/t9_clean.txt", O_CREATE | O_WRONLY);
-  write(fd, "clean", 5);
-  close(fd);
+  put("/ftseed", "taint");
+  require(marktaint("/ftseed") == 0);
+  require(equals("/ftseed", "taint") && istainted() == 1);
+}
 
-  taint_myself();
-  int r = unlink("/t9_clean.txt");
-  CHECK("T9", "tainted process unlink is refused with -1", r == -1);
+static void
+born_untrusted(void)
+{
+  unlink("/t5new");
+  int child = fork(), status = -1;
+  require(child >= 0);
+  if (child == 0) {
+    taint();
+    put("/t5new", "new-data");
+    exit(0);
+  }
+  require(wait(&status) == child && status == 0);
+  require(istainted() == 0);
+  CHECK("T5", "clean observer reads born-untrusted file", equals("/t5new", "new-data") && istainted() == 1);
+}
 
-  // Verify file survives
-  fd = open("/t9_clean.txt", O_RDONLY);
-  CHECK("T9", "file survives denied unlink", fd >= 0);
+static void
+unlink_refused(void)
+{
+  put("/t9clean", "preserved");
+  taint();
+  CHECK("T9", "unlink refused and contents preserved", unlink("/t9clean") == -1 && equals("/t9clean", "preserved"));
+}
+
+static void
+open_refused(void)
+{
+  put("/tclean", "preserved");
+  taint();
+  CHECK("T11b", "write-only open refused", open("/tclean", O_WRONLY) == -1);
+  CHECK("T18", "read-only truncate refused before data loss", open("/tclean", O_RDONLY | O_TRUNC) == -1 && equals("/tclean", "preserved"));
+  CHECK("T19", "read-write open refused", open("/tclean", O_RDWR) == -1);
+  int fd = open("/ftseed", O_WRONLY);
+  CHECK("T11b", "untrusted file remains writable", fd >= 0 && write(fd, "okay", 4) == 4);
   if (fd >= 0) close(fd);
 }
 
-// T11b: tainted open-for-write on clean file refused
-void
-test_t11b_open_write_refused(void)
+static void
+mark_validation(void)
 {
-  int fd = open("/t11b_clean.txt", O_CREATE | O_WRONLY);
-  write(fd, "initial", 7);
-  close(fd);
-
-  taint_myself();
-  int bad_fd = open("/t11b_clean.txt", O_WRONLY);
-  CHECK("T11b", "tainted open for WRONLY on clean file is refused", bad_fd < 0);
+  CHECK("T16", "missing empty directory and bad-pointer paths rejected",
+        marktaint("/missing") == -1 && marktaint("") == -1 &&
+        marktaint("/") == -1 && marktaint((char *)~(uint64)0) == -1);
 }
 
-// T16: marktaint validation error cases
-void
-test_t16_marktaint_validation(void)
+static void
+inode_reuse(void)
 {
-  int r1 = marktaint("/nonexistent_file_xyz.txt");
-  int r2 = marktaint("");
-  int r3 = marktaint("/"); // directory
-  CHECK("T16", "marktaint returns -1 on missing, empty, or directory path", r1 < 0 && r2 < 0 && r3 < 0);
+  struct stat original, current;
+  unlink("/reuse");
+  put("/reuse", "old");
+  require(stat("/reuse", &original) == 0);
+  require(marktaint("/reuse") == 0 && unlink("/reuse") == 0);
+  int reused = 0, clean = 1;
+  for (int index = 0; index < 8; index++) {
+    char path[] = "/reuse0";
+    path[6] = '0' + index;
+    unlink(path);
+    put(path, "fresh");
+    require(stat(path, &current) == 0);
+    printf("T13 inode old=%d new=%d path=%s\n", original.ino, current.ino, path);
+    reused |= original.ino == current.ino;
+    clean &= equals(path, "fresh") && istainted() == 0;
+  }
+  if (!reused)
+    INCONCLUSIVE("T13", "no inode reuse within eight allocations");
+  else
+    CHECK("T13", "REUSE-CONFIRMED all eight readers remain clean", clean);
 }
 
-// T18: tainted open with O_TRUNC refused and contents unchanged
-void
-test_t18_open_trunc_refused(void)
+static void
+nonregular_refused(void)
 {
-  int fd = open("/t18_clean.txt", O_CREATE | O_WRONLY);
-  write(fd, "preserve_me", 11);
-  close(fd);
+  taint();
+  CHECK("T-OH2", "tainted mkdir refused", mkdir("/bad-directory") == -1);
+  CHECK("T-OH2", "tainted mknod refused", mknod("/bad-device", 1, 1) == -1);
+}
 
-  taint_myself();
-  int bad_fd = open("/t18_clean.txt", O_RDONLY | O_TRUNC);
-  CHECK("T18", "tainted open with O_TRUNC on clean file refused", bad_fd < 0);
+static void
+fp4(void)
+{
+  unlink("/new.txt");
+  taint();
+  put("/new.txt", "allowed");
+  CHECK("FP-4", "tainted creator writes newly untrusted file", equals("/new.txt", "allowed"));
+}
 
-  // In clean child, verify file contents preserved
-  int pid = fork();
-  if (pid == 0) {
-    fd = open("/t18_clean.txt", O_RDONLY);
-    char buf[16];
-    int n = read(fd, buf, 15);
-    close(fd);
-    exit(n == 11 ? 0 : 1);
+static void
+phase(char *mode, char *token)
+{
+  require(strlen(token) > 0 && strlen(token) < 64 && istainted() == 0);
+  if (strcmp(mode, "phase1-t2") == 0) {
+    put("/t2.txt", token);
+    CHECK("T2-P1", "token created and marked", marktaint("/t2.txt") == 0);
+    sync();
+  } else if (strcmp(mode, "phase2-t2") == 0) {
+    CHECK("T2", "reboot token matches and read taints fresh process", equals("/t2.txt", token) && istainted() == 1);
+  } else if (strcmp(mode, "phase1-t17") == 0) {
+    put("/t17proof", token);
+    put("/t17a.txt", token);
+    CHECK("T17-P1", "marked file deleted before reboot", marktaint("/t17a.txt") == 0 && unlink("/t17a.txt") == 0);
+    sync();
+  } else if (strcmp(mode, "phase2-t17") == 0) {
+    struct stat state;
+    int proof = equals("/t17proof", token) && istainted() == 0;
+    int absent = stat("/t17a.txt", &state) == -1;
+    put("/t17b.txt", "fresh");
+    CHECK("T17", "same-image lifecycle and clean recreation (no reuse claim)",
+          proof && absent && equals("/t17b.txt", "fresh") && istainted() == 0);
   } else {
-    int status;
-    wait(&status);
-    CHECK("T18", "contents unchanged after denied O_TRUNC open", status == 0);
-  }
-}
-
-// T19: tainted open with O_RDWR refused
-void
-test_t19_open_rdwr_refused(void)
-{
-  int fd = open("/t19_clean.txt", O_CREATE | O_WRONLY);
-  write(fd, "data", 4);
-  close(fd);
-
-  taint_myself();
-  int bad_fd = open("/t19_clean.txt", O_RDWR);
-  CHECK("T19", "tainted open with O_RDWR on clean file refused", bad_fd < 0);
-}
-
-// T13: Inode reuse check using fstat
-void
-test_t13_inode_reuse(void)
-{
-  int fd = open("/r.txt", O_CREATE | O_WRONLY);
-  if (fd < 0) {
-    INCONCLUSIVE("T13", "create /r.txt failed");
-    return;
-  }
-  struct stat st;
-  fstat(fd, &st);
-  uint target_ino = st.ino;
-  write(fd, "test", 4);
-  close(fd);
-
-  marktaint("/r.txt");
-  unlink("/r.txt");
-
-  // Allocate new files and see if any reuses target_ino
-  int found_reuse = 0;
-  for (int i = 0; i < 8; i++) {
-    char name[16];
-    name[0] = '/'; name[1] = 'n'; name[2] = '0' + i; name[3] = '.'; name[4] = 't'; name[5] = 0;
-    int nfd = open(name, O_CREATE | O_WRONLY);
-    if (nfd >= 0) {
-      struct stat nst;
-      fstat(nfd, &nst);
-      write(nfd, "abc", 3);
-      close(nfd);
-      if (nst.ino == target_ino) {
-        found_reuse = 1;
-        // Verify this reused inode is clean
-        int cpid = fork();
-        if (cpid == 0) {
-          int rfd = open(name, O_RDONLY);
-          char b[4];
-          read(rfd, b, 3);
-          close(rfd);
-          exit(istainted() == 0 ? 0 : 1);
-        } else {
-          int s;
-          wait(&s);
-          CHECK("T13", "reused inode is initialized clean", s == 0);
-        }
-        break;
-      }
-    }
-  }
-
-  if (!found_reuse) {
-    INCONCLUSIVE("T13", "inode reuse not matched within 8 files");
+    CHECK("ARGS", "unknown persistence phase", 0);
   }
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-  run_in_child(test_t5_create_born_untrusted);
-  run_in_child(test_t9_unlink_refused);
-  run_in_child(test_t11b_open_write_refused);
-  run_in_child(test_t16_marktaint_validation);
-  run_in_child(test_t18_open_trunc_refused);
-  run_in_child(test_t19_open_rdwr_refused);
-  run_in_child(test_t13_inode_reuse);
+  if (argc == 3)
+    phase(argv[1], argv[2]);
+  else if (argc == 2 && strcmp(argv[1], "fp4") == 0)
+    run_in_child(fp4);
+  else if (argc == 2 && strcmp(argv[1], "oh2") == 0)
+    run_in_child(nonregular_refused);
+  else if (argc == 1) {
+    run_in_child(born_untrusted);
+    run_in_child(unlink_refused);
+    run_in_child(open_refused);
+    run_in_child(mark_validation);
+    run_in_child(inode_reuse);
+    run_in_child(nonregular_refused);
+  } else
+    CHECK("ARGS", "invalid arguments", 0);
   tlib_summary();
   exit(0);
 }
