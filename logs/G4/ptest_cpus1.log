@@ -1,0 +1,24 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       969645b
+DATE:         2026-10-26T22:37:04+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-unknown-elf-gcc 13.2.0 (cross-compilation target)
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      ptest at CPUS=1 and concurrent stress trials (Task D-11)
+================================================================
+
+xv6 kernel is booting
+init: starting sh
+$ ptest
+PASS T6 clean reader of pipe written by tainted writer becomes tainted
+PASS T7 clean reader of clean-only pipe remains clean
+PASS T8 watermark flags reader consuming below tainted_hi (documented false positive)
+PASS T14 pipe written via dup fd propagates taint to reader
+PASS T10 exec outside /safe by tainted process is refused
+PASS T12 taint survives in process context
+PASS T20 exec(/safe) and exec(/) are refused
+PASS D-09 concurrent pipe stress test: zero false negatives
+SUMMARY pass=8 fail=0 inconclusive=0
+$ 
