@@ -1,0 +1,68 @@
+From 4d6bd9559fefffffc9727eecca647da1f55ebe10 Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:33:30 +0530
+Subject: [PATCH 29/47] [Member B] B-09: Add T11a test to ttest.c verifying
+ write refusal on clean FD after process taints
+
+---
+ user/ttest.c | 37 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
+
+diff --git a/user/ttest.c b/user/ttest.c
+index 9ac6a46..16f7613 100644
+--- a/user/ttest.c
++++ b/user/ttest.c
+@@ -102,6 +102,42 @@ test_t3_read_latch(void)
+   CHECK("T3", "positive-byte read taints while zero-byte read does not", t0 == 0 && n > 0 && t1 == 1);
+ }
+ 
++
++void
++test_t11a_write_clean_fd_after_taint(void)
++{
++  // 1. Open a clean file for writing while process is clean
++  int clean_fd = open("/clean_t11a.txt", O_CREATE | O_WRONLY);
++  if (clean_fd < 0) {
++    CHECK("T11a", "create clean file", 0);
++    return;
++  }
++
++  // 2. Taint process by reading untrusted file
++  int ufd = open("/untrusted_t11a.txt", O_CREATE | O_WRONLY);
++  write(ufd, "taint", 5);
++  close(ufd);
++  marktaint("/untrusted_t11a.txt");
++
++  ufd = open("/untrusted_t11a.txt", O_RDONLY);
++  char buf[8];
++  read(ufd, buf, 5);
++  close(ufd);
++
++  int t = istainted();
++  if (t != 1) {
++    close(clean_fd);
++    CHECK("T11a", "process became tainted", 0);
++    return;
++  }
++
++  // 3. Write to the previously opened clean fd -> MUST fail (-1)
++  int w = write(clean_fd, "malicious", 9);
++  close(clean_fd);
++
++  CHECK("T11a", "write via FD opened while clean is refused after process becomes tainted", w < 0);
++}
++
+ int
+ main(int argc, char *argv[])
+ {
+@@ -109,6 +145,7 @@ main(int argc, char *argv[])
+   run_in_child(test_t1_fresh_clean);
+   run_in_child(test_t4_fork_inheritance);
+   run_in_child(test_t3_read_latch);
++  run_in_child(test_t11a_write_clean_fd_after_taint);
+   tlib_summary();
+   exit(0);
+ }
+-- 
+2.48.1
+

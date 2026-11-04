@@ -1,0 +1,45 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       2e661158cfbef1b5658b1c9967c06226973c518b
+DATE:         2026-11-02T10:51:46+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      ftest
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+BOOTS: [{"disk_path": "/tmp/xv6-bridge-gge2dskj/fs.img", "sha256": "5f5608d4c27915bf2fe2fb9b3485627fa6dc5e8483e84bf3e4b669f9a7ead7b8"}]
+RESULT: suite failed: SUMMARY=(8, 2, 0), observed=(8, 2, 0)
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ ftest; echo @@DONE0bcd221e7e45@@
+PASS T5 clean observer reads born-untrusted file
+taint: unlink refused for pid 7
+PASS T9 unlink refused and contents preserved
+taint: write refused for pid 8
+PASS T11b write-only open refused
+taint: write refused for pid 8
+PASS T18 read-only truncate refused before data loss
+taint: write refused for pid 8
+PASS T19 read-write open refused
+PASS T11b untrusted file remains writable
+PASS T16 missing empty directory and bad-pointer paths rejected
+T13 inode old=34 new=34 path=/reuse0
+T13 inode old=34 new=35 path=/reuse1
+T13 inode old=34 new=36 path=/reuse2
+T13 inode old=34 new=37 path=/reuse3
+T13 inode old=34 new=38 path=/reuse4
+T13 inode old=34 new=39 path=/reuse5
+T13 inode old=34 new=40 path=/reuse6
+T13 inode old=34 new=41 path=/reuse7
+PASS T13 REUSE-CONFIRMED all eight readers remain clean
+FAIL T-OH2 tainted mkdir refused
+FAIL T-OH2 tainted mknod refused
+SUMMARY pass=8 fail=2 inconclusive=0
+@@DONE0bcd221e7e45@@

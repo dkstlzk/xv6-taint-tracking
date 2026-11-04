@@ -1,0 +1,233 @@
+From 2ac87cf8894125614909b0b1f51832138eb6375d Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:36:38 +0530
+Subject: [PATCH 41/47] [Member A] A-11: Implement red-team attack suite A1,
+ A2, A3, A4, A8, A9, A16, A17, A18 in atest.c
+
+---
+ user/atest.c | 205 ++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 201 insertions(+), 4 deletions(-)
+
+diff --git a/user/atest.c b/user/atest.c
+index 42cfb45..c49d5bb 100644
+--- a/user/atest.c
++++ b/user/atest.c
+@@ -1,14 +1,211 @@
+ #include "kernel/types.h"
+ #include "kernel/stat.h"
++#include "kernel/fcntl.h"
+ #include "user/user.h"
++#include "user/tlib.h"
+ 
+-// atest.c — Red-team attack suite harness stub (Member A)
+-//
+-// Plan reference: Task A-04 (compiling stub; main exits 0)
+-// Future milestones will implement attacks A1..A18 against the taint tracking subsystem.
++// user/atest.c — Red-team adversarial attack harness (Member A)
++// Implements attacks: A1, A2, A3, A8, A9, A17, A18 (+ A4, A16 OH)
++// Each test reports PASS with blocking mechanism in the description.
++
++static void
++taint_via_file(void)
++{
++  int fd = open("/untrusted_atest_seed.txt", O_CREATE | O_WRONLY);
++  write(fd, "bad", 3);
++  close(fd);
++  marktaint("/untrusted_atest_seed.txt");
++  fd = open("/untrusted_atest_seed.txt", O_RDONLY);
++  char buf[4];
++  read(fd, buf, 3);
++  close(fd);
++}
++
++// A1: Unlink clean file via pipe taint
++void
++attack_a1_unlink_pipe_taint(void)
++{
++  int p[2];
++  pipe(p);
++  int pid = fork();
++  if (pid == 0) {
++    taint_via_file();
++    close(p[0]);
++    write(p[1], "X", 1);
++    close(p[1]);
++    exit(0);
++  }
++  close(p[1]);
++  int s;
++  wait(&s);
++
++  char b[2];
++  read(p[0], b, 1);
++  close(p[0]);
++
++  // Process consumed byte from tainted pipe; attempt unlink clean file
++  int fd = open("/clean_a1.txt", O_CREATE | O_WRONLY);
++  write(fd, "ok", 2);
++  close(fd);
++
++  int r = unlink("/clean_a1.txt");
++  CHECK("A1", "unlink refused via pipe taint", r == -1);
++}
++
++// A2: Write to clean file via pipe taint
++void
++attack_a2_write_pipe_taint(void)
++{
++  int p[2];
++  pipe(p);
++  int pid = fork();
++  if (pid == 0) {
++    taint_via_file();
++    close(p[0]);
++    write(p[1], "X", 1);
++    close(p[1]);
++    exit(0);
++  }
++  close(p[1]);
++  int s;
++  wait(&s);
++
++  char b[2];
++  read(p[0], b, 1);
++  close(p[0]);
++
++  int fd = open("/clean_a2.txt", O_CREATE | O_WRONLY);
++  int r = write(fd, "malicious", 9);
++  close(fd);
++  CHECK("A2", "write refused via pipe taint", r < 0);
++}
++
++// A3: Exec outside /safe via pipe taint
++void
++attack_a3_exec_outside_safe_pipe(void)
++{
++  int p[2];
++  pipe(p);
++  int pid = fork();
++  if (pid == 0) {
++    taint_via_file();
++    close(p[0]);
++    write(p[1], "X", 1);
++    close(p[1]);
++    exit(0);
++  }
++  close(p[1]);
++  int s;
++  wait(&s);
++
++  char b[2];
++  read(p[0], b, 1);
++  close(p[0]);
++
++  char *args[] = {"echo", 0};
++  int r = exec("/echo", args);
++  CHECK("A3", "exec outside /safe refused via pipe taint", r == -1);
++}
++
++// A4: Link creation refusal (OH1)
++void
++attack_a4_link_laundering(void)
++{
++  int fd = open("/clean_a4.txt", O_CREATE | O_WRONLY);
++  write(fd, "data", 4);
++  close(fd);
++
++  taint_via_file();
++  int r = link("/clean_a4.txt", "/link_a4.txt");
++  CHECK("A4", "link creation refused for tainted caller (OH1)", r == -1);
++}
++
++// A8: Raw syscall evasion (bypassing libc wrapper using inline ecall)
++void
++attack_a8_raw_ecall_evasion(void)
++{
++  int fd = open("/clean_a8.txt", O_CREATE | O_WRONLY);
++  write(fd, "data", 4);
++  close(fd);
++
++  taint_via_file();
++
++  // Raw ecall for SYS_unlink (18) with a0 = "/clean_a8.txt"
++  char *path = "/clean_a8.txt";
++  register uint64 a0 asm("a0") = (uint64)path;
++  register uint64 a7 asm("a7") = 18; // SYS_unlink
++  asm volatile("ecall" : "+r"(a0) : "r"(a7) : "memory");
++
++  int res = (int)a0;
++  CHECK("A8", "raw ecall unlink refused by kernel enforcement", res == -1);
++}
++
++// A9: Exec of untrusted binary inside /safe
++void
++attack_a9_exec_untrusted_in_safe(void)
++{
++  mkdir("/safe");
++  // Create an untrusted binary inside /safe
++  int fd = open("/safe/malicious", O_CREATE | O_WRONLY);
++  write(fd, "fake_elf", 8);
++  close(fd);
++  marktaint("/safe/malicious");
++
++  taint_via_file();
++  char *args[] = {"malicious", 0};
++  int r = exec("/safe/malicious", args);
++  CHECK("A9", "exec of untrusted binary refused even inside /safe", r == -1);
++}
++
++// A16: Directory laundering via /safe/.. (OH3)
++void
++attack_a16_dir_traversal_laundering(void)
++{
++  mkdir("/safe");
++  taint_via_file();
++  char *args[] = {"echo", 0};
++  int r = exec("/safe/../echo", args);
++  CHECK("A16", "directory traversal escaping /safe refused", r == -1);
++}
++
++// A17: Truncate clean file via sys_open
++void
++attack_a17_open_trunc_laundering(void)
++{
++  int fd = open("/clean_a17.txt", O_CREATE | O_WRONLY);
++  write(fd, "preserve", 8);
++  close(fd);
++
++  taint_via_file();
++  int bad_fd = open("/clean_a17.txt", O_WRONLY | O_TRUNC);
++  CHECK("A17", "clean file truncation refused via sys_open gate", bad_fd < 0);
++}
++
++// A18: Append to clean file via sys_open
++void
++attack_a18_open_append_laundering(void)
++{
++  int fd = open("/clean_a18.txt", O_CREATE | O_WRONLY);
++  write(fd, "initial", 7);
++  close(fd);
++
++  taint_via_file();
++  int bad_fd = open("/clean_a18.txt", O_WRONLY);
++  CHECK("A18", "clean file write open refused via sys_open gate", bad_fd < 0);
++}
+ 
+ int
+ main(int argc, char *argv[])
+ {
++  run_in_child(attack_a1_unlink_pipe_taint);
++  run_in_child(attack_a2_write_pipe_taint);
++  run_in_child(attack_a3_exec_outside_safe_pipe);
++  run_in_child(attack_a4_link_laundering);
++  run_in_child(attack_a8_raw_ecall_evasion);
++  run_in_child(attack_a9_exec_untrusted_in_safe);
++  run_in_child(attack_a16_dir_traversal_laundering);
++  run_in_child(attack_a17_open_trunc_laundering);
++  run_in_child(attack_a18_open_append_laundering);
++  tlib_summary();
+   exit(0);
+ }
+-- 
+2.48.1
+

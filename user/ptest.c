@@ -4,312 +4,182 @@
 #include "user/user.h"
 #include "user/tlib.h"
 
-// user/ptest.c — Pipe and exec containment test harness (Member D)
-// Tests: T6 (tainted pipe writer), T7 (clean pipe writer)
+static uint random_state = 1;
 
-void
-test_t6_tainted_pipe(void)
+static uint
+next_random(void)
 {
-  int p[2];
-  if (pipe(p) < 0) {
-    CHECK("T6", "pipe creation", 0);
-    return;
-  }
+  random_state = random_state * 1664525U + 1013904223U;
+  return random_state;
+}
 
-  int pid = fork();
-  if (pid < 0) {
-    CHECK("T6", "fork", 0);
-    return;
-  }
-  if (pid == 0) {
-    // Taint child by creating and reading untrusted file
-    int fd = open("/untrusted_p6.txt", O_CREATE | O_WRONLY);
-    write(fd, "bad", 3);
-    close(fd);
-    marktaint("/untrusted_p6.txt");
-    fd = open("/untrusted_p6.txt", O_RDONLY);
-    char buf[4];
-    read(fd, buf, 3);
-    close(fd);
-
-    close(p[0]);
-    write(p[1], "msg", 3);
-    close(p[1]);
-    exit(0);
-  } else {
-    close(p[1]);
-    int status;
-    wait(&status);
-
-    char buf[4];
-    int n = read(p[0], buf, 3);
-    close(p[0]);
-
-    int reader_taint = istainted();
-    CHECK("T6", "clean reader of pipe written by tainted writer becomes tainted", n > 0 && reader_taint == 1);
+static void
+require(int condition)
+{
+  if (!condition) {
+    fprintf(2, "ptest: setup failed\n");
+    exit(1);
   }
 }
 
-void
-test_t7_clean_pipe(void)
+static void
+taint(void)
 {
-  int p[2];
-  if (pipe(p) < 0) {
-    CHECK("T7", "pipe creation", 0);
-    return;
-  }
-
-  int pid = fork();
-  if (pid < 0) {
-    CHECK("T7", "fork", 0);
-    return;
-  }
-  if (pid == 0) {
-    // Clean child writes to pipe
-    close(p[0]);
-    write(p[1], "clean", 5);
-    close(p[1]);
-    exit(0);
-  } else {
-    close(p[1]);
-    int status;
-    wait(&status);
-
-    char buf[6];
-    int n = read(p[0], buf, 5);
-    close(p[0]);
-
-    int reader_taint = istainted();
-    CHECK("T7", "clean reader of clean-only pipe remains clean", n > 0 && reader_taint == 0);
-  }
+  int fd = open("/pseed", O_CREATE | O_WRONLY | O_TRUNC);
+  require(fd >= 0 && write(fd, "T", 1) == 1);
+  close(fd);
+  require(marktaint("/pseed") == 0);
+  fd = open("/pseed", O_RDONLY);
+  char byte;
+  require(fd >= 0 && read(fd, &byte, 1) == 1);
+  close(fd);
+  require(istainted() == 1);
 }
 
-
-// T8: Mixed writers with watermark
-void
-test_t8_mixed_writers(void)
+static void
+pipe_case(int untrusted, int use_dup)
 {
-  int p[2];
-  pipe(p);
-
-  // Clean writer writes 10 bytes
-  write(p[1], "0123456789", 10);
-
-  // Tainted writer writes 10 bytes
-  int pid = fork();
-  if (pid == 0) {
-    int fd = open("/untrusted_p8.txt", O_CREATE | O_WRONLY);
-    write(fd, "bad", 3);
-    close(fd);
-    marktaint("/untrusted_p8.txt");
-    fd = open("/untrusted_p8.txt", O_RDONLY);
-    char b[4];
-    read(fd, b, 3);
-    close(fd);
-    write(p[1], "ABCDEFGHIJ", 10);
-    close(p[1]);
+  int fds[2], status = -1;
+  require(pipe(fds) == 0);
+  int child = fork();
+  require(child >= 0);
+  if (child == 0) {
+    close(fds[0]);
+    if (untrusted) taint();
+    int writer = use_dup ? dup(fds[1]) : fds[1];
+    require(writer >= 0 && write(writer, "T", 1) == 1);
+    close(writer);
+    if (use_dup) close(fds[1]);
     exit(0);
   }
-  int s;
-  wait(&s);
-  close(p[1]);
-
-  // Clean reader takes first 5 bytes
-  int rpid = fork();
-  if (rpid == 0) {
-    char buf[8];
-    read(p[0], buf, 5);
-    close(p[0]);
-    // Known conservative false positive: reader taking clean bytes before tainted_hi is tainted
-    exit(istainted() == 1 ? 0 : 1);
-  }
-  wait(&s);
-  close(p[0]);
-  CHECK("T8", "watermark flags reader consuming below tainted_hi (documented false positive)", s == 0);
+  close(fds[1]);
+  require(wait(&status) == child && status == 0);
+  char byte;
+  require(istainted() == 0);
+  CHECK("PIPE-0", "zero-byte pipe read stays clean", read(fds[0], &byte, 0) == 0 && istainted() == 0);
+  CHECK("PIPE-E", "failed pipe copy stays clean", read(fds[0], (void *)~(uint64)0, 1) == -1 && istainted() == 0);
+  int count = read(fds[0], &byte, 1);
+  close(fds[0]);
+  CHECK(use_dup ? "T14" : untrusted ? "T6" : "T7", "pipe reader state matches writer and dup shares pipe", count == 1 && istainted() == untrusted);
 }
 
-// T14: dup keeps taint
-void
-test_t14_dup_keeps_taint(void)
+static void tainted_pipe(void) { pipe_case(1, 0); }
+static void clean_pipe(void) { pipe_case(0, 0); }
+static void dup_pipe(void) { pipe_case(1, 1); }
+
+static void
+mixed_pipe(void)
 {
-  int p[2];
-  pipe(p);
-  int pid = fork();
-  if (pid == 0) {
-    int fd = open("/untrusted_p14.txt", O_CREATE | O_WRONLY);
-    write(fd, "bad", 3);
-    close(fd);
-    marktaint("/untrusted_p14.txt");
-    fd = open("/untrusted_p14.txt", O_RDONLY);
-    char b[4];
-    read(fd, b, 3);
-    close(fd);
-    int p1_dup = dup(p[1]);
-    write(p1_dup, "dup_msg", 7);
-    close(p1_dup);
-    close(p[1]);
+  int fds[2], status = -1;
+  require(pipe(fds) == 0 && write(fds[1], "CCCCC", 5) == 5);
+  int child = fork();
+  require(child >= 0);
+  if (child == 0) {
+    close(fds[0]);
+    taint();
+    require(write(fds[1], "TTTTT", 5) == 5);
+    close(fds[1]);
     exit(0);
   }
-  int s;
-  wait(&s);
-  close(p[1]);
-
-  char buf[8];
-  read(p[0], buf, 7);
-  close(p[0]);
-  CHECK("T14", "pipe written via dup fd propagates taint to reader", istainted() == 1);
+  require(wait(&status) == child && status == 0);
+  close(fds[1]);
+  char bytes[5];
+  CHECK("T8", "clean prefix below watermark conservatively taints", read(fds[0], bytes, 5) == 5 && memcmp(bytes, "CCCCC", 5) == 0 && istainted() == 1);
+  close(fds[0]);
 }
 
-
-// T10: exec outside /safe refused, inside /safe clean runs
-void
-test_t10_exec_containment(void)
+static void
+exec_checks(void)
 {
   mkdir("/safe");
-  // Taint child
-  int pid = fork();
-  if (pid == 0) {
-    int fd = open("/untrusted_t10.txt", O_CREATE | O_WRONLY);
-    write(fd, "bad", 3);
-    close(fd);
-    marktaint("/untrusted_t10.txt");
-    fd = open("/untrusted_t10.txt", O_RDONLY);
-    char b[4];
-    read(fd, b, 3);
-    close(fd);
-
-    // 1. Exec outside /safe -> MUST be refused (-1)
-    char *args[] = {"echo", "outside", 0};
-    int r = exec("/echo", args);
-    CHECK("T10", "exec outside /safe by tainted process is refused", r == -1);
-    exit(0);
+  unlink("/safe/ptest");
+  require(link("/ptest", "/safe/ptest") == 0);
+  taint();
+  char *outside[] = {"echo", 0};
+  CHECK("T10", "exec outside safe refused", exec("/echo", outside) == -1);
+  CHECK("T20", "safe directory self-match refused", exec("/safe", outside) == -1);
+  CHECK("T20", "root directory refused", exec("/", outside) == -1);
+  int child = fork(), status = -1;
+  require(child >= 0);
+  if (child == 0) {
+    char *args[] = {"ptest", "exec-check", 0};
+    exec("/safe/ptest", args);
+    exit(2);
   }
-  int s;
-  wait(&s);
+  require(wait(&status) == child);
+  CHECK("T12", "clean safe ELF executes and observes inherited taint", status == 0);
 }
 
-// T12: taint survives exec
-void
-test_t12_taint_survives_exec(void)
+static void
+stress_trial(void)
 {
-  // Taint is preserved in struct proc across kexec
-  int pid = fork();
-  if (pid == 0) {
-    int fd = open("/untrusted_t12.txt", O_CREATE | O_WRONLY);
-    write(fd, "bad", 3);
-    close(fd);
-    marktaint("/untrusted_t12.txt");
-    fd = open("/untrusted_t12.txt", O_RDONLY);
-    char b[4];
-    read(fd, b, 3);
-    close(fd);
-
-    // If an allowed binary in /safe exists, exec it; otherwise check p->tainted is never cleared
-    CHECK("T12", "taint survives in process context", istainted() == 1);
-    exit(0);
-  }
-  int s;
-  wait(&s);
-}
-
-// T20: exec("/safe") and exec("/") refused
-void
-test_t20_exec_dir_self_match_refused(void)
-{
-  mkdir("/safe");
-  int pid = fork();
-  if (pid == 0) {
-    int fd = open("/untrusted_t20.txt", O_CREATE | O_WRONLY);
-    write(fd, "bad", 3);
-    close(fd);
-    marktaint("/untrusted_t20.txt");
-    fd = open("/untrusted_t20.txt", O_RDONLY);
-    char b[4];
-    read(fd, b, 3);
-    close(fd);
-
-    char *args[] = {"safe", 0};
-    int r1 = exec("/safe", args);
-    char *args_root[] = {"", 0};
-    int r2 = exec("/", args_root);
-    CHECK("T20", "exec(/safe) and exec(/) are refused", r1 == -1 && r2 == -1);
-    exit(0);
-  }
-  int s;
-  wait(&s);
-}
-
-
-// D-09: Stress test two writers + reader
-void
-test_d09_stress_pipe_concurrency(void)
-{
-  int p[2];
-  pipe(p);
-
-  int pid1 = fork();
-  if (pid1 == 0) {
-    // Writer 1 (clean)
-    for (int i = 0; i < 50; i++) {
-      write(p[1], "C", 1);
+  int fds[2], statuses[2], children[2];
+  require(pipe(fds) == 0 && istainted() == 0);
+  uint seed = random_state;
+  int first = next_random() & 1;
+  for (int index = 0; index < 2; index++) {
+    int untrusted = index ^ first;
+    children[index] = fork();
+    require(children[index] >= 0);
+    if (children[index] == 0) {
+      close(fds[0]);
+      if (untrusted) taint();
+      if ((seed >> index) & 1) pause(1);
+      char bytes[1024];
+      memset(bytes, untrusted ? 'T' : 'C', sizeof(bytes));
+      require(write(fds[1], bytes, sizeof(bytes)) == sizeof(bytes));
+      close(fds[1]);
+      exit(0);
     }
-    close(p[1]);
-    exit(0);
   }
-
-  int pid2 = fork();
-  if (pid2 == 0) {
-    // Writer 2 (tainted)
-    int fd = open("/untrusted_stress.txt", O_CREATE | O_WRONLY);
-    write(fd, "bad", 3);
-    close(fd);
-    marktaint("/untrusted_stress.txt");
-    fd = open("/untrusted_stress.txt", O_RDONLY);
-    char b[4];
-    read(fd, b, 3);
-    close(fd);
-
-    for (int i = 0; i < 50; i++) {
-      write(p[1], "T", 1);
+  close(fds[1]);
+  char order[2049], bytes[127];
+  int total = 0, clean = 0, marked = 0, false_negatives = 0, valid = 1;
+  for (;;) {
+    int count = read(fds[0], bytes, 1 + next_random() % sizeof(bytes));
+    if (count == 0) break;
+    if (count < 0 || total + count > 2048) { valid = 0; break; }
+    for (int index = 0; index < count; index++) {
+      order[total++] = bytes[index];
+      if (bytes[index] == 'T') {
+        marked++;
+        if (!istainted()) false_negatives++;
+      } else if (bytes[index] == 'C') clean++;
+      else valid = 0;
     }
-    close(p[1]);
-    exit(0);
   }
-
-  close(p[1]);
-  int s;
-  wait(&s);
-  wait(&s);
-
-  int rpid = fork();
-  if (rpid == 0) {
-    char buf[128];
-    int total = 0;
-    while (1) {
-      int n = read(p[0], buf, sizeof(buf));
-      if (n <= 0) break;
-      total += n;
-    }
-    close(p[0]);
-    // Reader has consumed tainted bytes -> must be tainted (zero false negatives)
-    exit(istainted() == 1 ? 0 : 1);
-  }
-  wait(&s);
-  close(p[0]);
-  CHECK("D-09", "concurrent pipe stress test: zero false negatives", s == 0);
+  close(fds[0]);
+  require(wait(&statuses[0]) > 0 && wait(&statuses[1]) > 0);
+  order[total] = 0;
+  printf("STRESS seed=%d first=%s bytes=%d clean=%d tainted=%d false_negatives=%d order=%s\n",
+         seed, first ? "T" : "C", total, clean, marked, false_negatives, order);
+  CHECK("STRESS", "two concurrent long writers and clean reader; zero false negatives observed",
+        valid && statuses[0] == 0 && statuses[1] == 0 && clean == 1024 && marked == 1024 && false_negatives == 0 && istainted() == 1);
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-  run_in_child(test_t6_tainted_pipe);
-  run_in_child(test_t7_clean_pipe);
-  run_in_child(test_t8_mixed_writers);
-  run_in_child(test_t14_dup_keeps_taint);
-  run_in_child(test_t10_exec_containment);
-  run_in_child(test_t12_taint_survives_exec);
-  run_in_child(test_t20_exec_dir_self_match_refused);
-  run_in_child(test_d09_stress_pipe_concurrency);
+  if (argc == 2 && strcmp(argv[1], "exec-check") == 0)
+    exit(istainted() == 1 ? 0 : 1);
+  if (argc == 4 && strcmp(argv[1], "stress") == 0) {
+    int trials = atoi(argv[2]);
+    random_state = atoi(argv[3]);
+    require(trials > 0 && trials <= 1000);
+    for (int trial = 0; trial < trials; trial++) {
+      printf("TRIAL %d seed=%d\n", trial + 1, random_state);
+      run_in_child(stress_trial);
+      next_random();
+    }
+  } else if (argc == 1) {
+    run_in_child(tainted_pipe);
+    run_in_child(clean_pipe);
+    run_in_child(dup_pipe);
+    run_in_child(mixed_pipe);
+    run_in_child(exec_checks);
+    run_in_child(stress_trial);
+  } else
+    CHECK("ARGS", "invalid arguments", 0);
   tlib_summary();
   exit(0);
 }

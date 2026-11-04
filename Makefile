@@ -131,7 +131,7 @@ mkfs/mkfs: mkfs/mkfs.c $K/fs.h $K/param.h
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
 .PRECIOUS: %.o
 
-UPROGS=\
+STOCK_UPROGS=\
 	$U/_cat\
 	$U/_echo\
 	$U/_forktest\
@@ -151,17 +151,20 @@ UPROGS=\
 	$U/_logstress\
 	$U/_forphan\
 	$U/_dorphan\
-	$U/_sync\
-	# member B\
+	$U/_sync
+
+PROJECT_UPROGS=\
 	$U/_hello\
 	$U/_mark\
 	$U/_ttest\
-	# member C\
 	$U/_ftest\
-	# member D\
 	$U/_ptest\
-	# member A\
-	$U/_atest\
+	$U/_atest
+
+UPROGS=$(STOCK_UPROGS) $(PROJECT_UPROGS)
+
+stock.img: mkfs/mkfs README kernel/fs.h $(STOCK_UPROGS)
+	mkfs/mkfs $@ README $(STOCK_UPROGS)
 
 fs.img: mkfs/mkfs README kernel/fs.h $(UPROGS)
 	mkfs/mkfs fs.img README $(UPROGS)

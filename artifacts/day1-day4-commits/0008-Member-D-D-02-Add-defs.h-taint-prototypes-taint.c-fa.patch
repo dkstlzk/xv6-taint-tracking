@@ -1,0 +1,83 @@
+From b1aa2e8b536496de595aa4ef058181fbf11a4f4c Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:28:59 +0530
+Subject: [PATCH 08/47] [Member D] D-02: Add defs.h taint prototypes, taint.c
+ fail-closed stubs, and ptest.c harness stub
+
+---
+ kernel/defs.h  |  4 ++++
+ kernel/taint.c | 23 +++++++++++++++++++++++
+ user/ptest.c   | 17 +++++++++++++++++
+ 3 files changed, 44 insertions(+)
+ create mode 100644 kernel/taint.c
+ create mode 100644 user/ptest.c
+
+diff --git a/kernel/defs.h b/kernel/defs.h
+index 0ae6896..57aead8 100644
+--- a/kernel/defs.h
++++ b/kernel/defs.h
+@@ -182,5 +182,9 @@ void            virtio_disk_init(void);
+ void            virtio_disk_rw(struct buf *, int);
+ void            virtio_disk_intr(void);
+ 
++// taint.c (member D)
++int             in_safe(struct inode*);
++int             ip_untrusted(struct inode*);
++
+ // number of elements in fixed-size array
+ #define NELEM(x) (sizeof(x) / sizeof((x)[0]))
+diff --git a/kernel/taint.c b/kernel/taint.c
+new file mode 100644
+index 0000000..2d2efe3
+--- /dev/null
++++ b/kernel/taint.c
+@@ -0,0 +1,23 @@
++#include "types.h"
++#include "riscv.h"
++#include "param.h"
++#include "spinlock.h"
++#include "sleeplock.h"
++#include "stat.h"
++#include "fs.h"
++#include "file.h"
++#include "defs.h"
++
++// Fail-closed stubs for Day 1 (Task D-02)
++// in_safe returns 0 so no program is considered inside /safe yet.
++int
++in_safe(struct inode *ip)
++{
++  return 0;
++}
++
++int
++ip_untrusted(struct inode *ip)
++{
++  return ip->untrusted != 0;
++}
+diff --git a/user/ptest.c b/user/ptest.c
+new file mode 100644
+index 0000000..779ecd6
+--- /dev/null
++++ b/user/ptest.c
+@@ -0,0 +1,17 @@
++#include "kernel/types.h"
++#include "kernel/stat.h"
++#include "user/user.h"
++#include "user/tlib.h"
++
++// user/ptest.c — Pipe and exec containment test harness (Member D)
++//
++// Plan reference: Task D-02 (compiling stub / harness; main exits 0)
++// Future milestones implement: T6 (pipe taint), T7 (clean pipe), T8 (mixed writers),
++// T10 (exec containment), T12 (taint survives exec), T14 (pipe dup), T20 (exec /safe, /).
++
++int
++main(int argc, char *argv[])
++{
++  tlib_summary();
++  exit(0);
++}
+-- 
+2.48.1
+

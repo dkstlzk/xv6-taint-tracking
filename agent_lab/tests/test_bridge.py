@@ -1,70 +1,74 @@
-# agent_lab/tests/test_bridge.py — 9+ bridge unit/mock test cases
 import unittest
-import os
-import re
-from agent_lab.xv6agent.bridge import QemuBridge, BridgeTimeout
-from agent_lab.xv6agent import config
+from agent_lab.xv6agent.bridge import QemuBridge, BridgeDesync, BridgeTimeout
+
 
 class TestBridge(unittest.TestCase):
     def setUp(self):
-        self.bridge = QemuBridge()
+        self.bridge = QemuBridge(trusted_demo=True)
+        self.addCleanup(self.bridge.close)
 
-    def test_01_command_charset_valid(self):
-        res = self.bridge.run("ls -l /safe")
-        self.assertEqual(res["cmd"], "ls -l /safe")
+    def test_listing_is_real(self):
+        self.assertIn("README", self.bridge.run("ls")["output"])
 
-    def test_02_command_charset_invalid(self):
+    def test_default_rejects_shell_operators(self):
+        self.bridge.trusted_demo = False
         with self.assertRaises(ValueError):
-            self.bridge.run("cat /etc/passwd; rm -rf *")
+            self.bridge.run("ls; rm README")
+        self.assertIsNone(self.bridge.proc)
 
-    def test_03_max_command_length(self):
+    def test_max_length(self):
         with self.assertRaises(ValueError):
             self.bridge.run("a" * 81)
 
-    def test_04_sentinel_generation(self):
-        res = self.bridge.run("ls")
-        self.assertTrue(res["sentinel"].startswith("@@DONE"))
+    def test_eighty_byte_command_fits_guest_shell(self):
+        payload = "x" * 75
+        self.assertIn(payload, self.bridge.run("echo " + payload)["output"])
 
-    def test_05_sentinel_regex_lookbehind(self):
-        nonce = "123456"
-        sentinel = f"@@DONE{nonce}@@"
-        pat = re.compile(r"(?<!echo )" + re.escape(sentinel) + r"\r?\n")
-        
-        # Should NOT match the echo statement line
-        echo_line = f"ls ; echo {sentinel}\n"
-        self.assertIsNone(pat.search(echo_line))
-        
-        # Should match actual output line
-        output_line = f"file1 file2\n{sentinel}\n"
-        self.assertIsNotNone(pat.search(output_line))
+    def test_empty_and_newline(self):
+        for command in ("", "ls\necho bad"):
+            with self.assertRaises(ValueError):
+                self.bridge.run(command)
 
-    def test_06_persistent_mode_checksum(self):
-        b = QemuBridge(persist=True, disk_path="test_disk.tmp")
-        with open("test_disk.tmp", "wb") as f:
-            f.write(b"SAMPLE DISK CONTENT")
-        c1 = b.get_disk_checksum()
-        self.assertNotEqual(c1, "NO_DISK")
-        os.remove("test_disk.tmp")
+    def test_sentinel_does_not_match_echo(self):
+        result = self.bridge.run("echo actual-output")
+        self.assertIn("actual-output", result["output"])
+        self.assertNotIn(result["sentinel"], result["output"])
+        self.assertIn(result["sentinel"], self.bridge.transcript)
 
-    def test_07_fresh_disk_mode_flag(self):
-        b = QemuBridge(persist=False)
-        self.assertFalse(b.persist)
+    def test_nested_shell(self):
+        self.assertIn("nested", self.bridge.run("echo echo nested | sh")["output"])
+        self.assertIn("next", self.bridge.run("echo next")["output"])
 
-    def test_08_nested_shell_simulation(self):
-        # Verify unanchored matching works even with nested shell prompt
-        sentinel = "@@DONE999999@@"
-        pat = re.compile(r"(?<!echo )" + re.escape(sentinel) + r"\r?\n")
-        nested_output = f"$ $ echo hi\r\nhi\r\n{sentinel}\r\n"
-        self.assertIsNotNone(pat.search(nested_output))
+    def test_file_without_trailing_newline(self):
+        self.bridge.run("ftest fp4")
+        self.assertIn("allowed", self.bridge.run("cat /new.txt")["output"])
 
-    def test_09_kernel_log_search(self):
-        # Searching the whole line, not start of line
-        line = "$ taint: exec refused for pid 3"
-        self.assertIn("taint: exec refused", line)
-
-    def test_10_restart_clears_process(self):
+    def test_timeout_requires_restart(self):
+        with self.assertRaises(BridgeTimeout):
+            self.bridge.run("cat", timeout=0.3)
+        with self.assertRaises(BridgeDesync):
+            self.bridge.run("ls")
         self.bridge.restart()
-        self.assertIsNone(self.bridge.proc)
+        self.assertIn("README", self.bridge.run("ls")["output"])
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_persistent_restart(self):
+        self.bridge.persist = True
+        self.bridge.run("echo retained > /bridge.txt")
+        self.bridge.run("sync")
+        self.bridge.stop()
+        checksum = self.bridge.get_disk_checksum()
+        self.bridge.start()
+        self.assertEqual(checksum, self.bridge.boots[-1]["sha256"])
+        self.assertIn("retained", self.bridge.run("cat /bridge.txt")["output"])
+
+    def test_fresh_restart(self):
+        self.bridge.run("echo ephemeral > /bridge.txt")
+        self.bridge.restart()
+        self.assertIn("cannot open", self.bridge.run("cat /bridge.txt")["output"])
+
+    def test_stop_reaps_qemu(self):
+        self.bridge.start()
+        process = self.bridge.proc
+        self.bridge.stop()
+        self.assertIsNotNone(process.poll())
+        self.assertIsNone(self.bridge.proc)

@@ -1,0 +1,38 @@
+From 0dcccbf14e0a188a4bca108c400ec87fdb26239d Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:29:35 +0530
+Subject: [PATCH 11/47] [Member B] X-02: Gate G1 - Merge initial subsystem
+ stubs, verify layout and hello smoke, tag m1-plumbing
+
+---
+ logs/G1/hello.log | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+ create mode 100644 logs/G1/hello.log
+
+diff --git a/logs/G1/hello.log b/logs/G1/hello.log
+new file mode 100644
+index 0000000..21157c6
+--- /dev/null
++++ b/logs/G1/hello.log
+@@ -0,0 +1,18 @@
++================================================================
++EVIDENCE HEADER
++================================================================
++COMMIT:       0ef7aa4
++DATE:         2026-10-26T22:29:29+05:30
++CPUS:         1
++GCC_VERSION:  riscv64-unknown-elf-gcc 13.2.0 (cross-compilation target)
++QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
++COMMAND:      make qemu (Gate G1 Smoke Test: hello)
++================================================================
++
++xv6 kernel is booting
++
++init: starting sh
++$ hello
++hello 1 2 3 4
++sum = 10
++$ 
+-- 
+2.48.1
+

@@ -1,0 +1,24 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       40b1165a041f364c11a010215c53f82e797306df
+DATE:         2026-11-02T10:57:00+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      FP-2
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ mark /inbox.txt; echo @589fdb6c@
+@589fdb6c@
+cat /inbox.txt | wc; echo @46056149@
+$ 1 3 38 
+@46056149@

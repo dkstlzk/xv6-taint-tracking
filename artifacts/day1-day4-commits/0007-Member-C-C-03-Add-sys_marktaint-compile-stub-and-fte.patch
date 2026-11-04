@@ -1,0 +1,55 @@
+From bddbded03d491ac5775393c4d5368527cadb3989 Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:28:48 +0530
+Subject: [PATCH 07/47] [Member C] C-03: Add sys_marktaint compile stub and
+ ftest.c harness skeleton
+
+---
+ kernel/sysfile.c |  8 ++++++++
+ user/ftest.c     | 18 ++++++++++++++++++
+ 2 files changed, 26 insertions(+)
+ create mode 100644 user/ftest.c
+
+diff --git a/kernel/sysfile.c b/kernel/sysfile.c
+index 7781287..f7143b0 100644
+--- a/kernel/sysfile.c
++++ b/kernel/sysfile.c
+@@ -528,3 +528,11 @@ sys_pipe(void)
+   }
+   return 0;
+ }
++
++// sys_marktaint stub (Member C, Task C-03)
++// Returns 0 without marking; replaced by real validation in C-05.
++uint64
++sys_marktaint(void)
++{
++  return 0;
++}
+diff --git a/user/ftest.c b/user/ftest.c
+new file mode 100644
+index 0000000..eb79a44
+--- /dev/null
++++ b/user/ftest.c
+@@ -0,0 +1,18 @@
++#include "kernel/types.h"
++#include "kernel/stat.h"
++#include "user/user.h"
++#include "user/tlib.h"
++
++// user/ftest.c — Filesystem taint enforcement test suite (Member C)
++//
++// Plan reference: Task C-03 (stub / skeleton; main exits 0)
++// Future milestones implement: T2 (two-boot persistence), T5 (create born untrusted),
++// T9 (unlink refusal), T11b (open-for-write gate), T13 (inode reuse), T16 (marktaint errors),
++// T18 (open truncate refusal), T19 (open RDWR refusal).
++
++int
++main(int argc, char *argv[])
++{
++  tlib_summary();
++  exit(0);
++}
+-- 
+2.48.1
+

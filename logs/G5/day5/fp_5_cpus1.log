@@ -1,0 +1,35 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       40b1165a041f364c11a010215c53f82e797306df
+DATE:         2026-11-02T10:57:03+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      FP-5
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ mark /inbox.txt; echo @7776581e@
+@7776581e@
+echo ls > /fp5ls; echo @16725f35@
+$ @16725f35@
+echo rm /important.txt > /fp5rm; echo @6c1efb40@
+$ @6c1efb40@
+cat /inbox.txt /fp5ls /fp5rm | sh; echo @85c32dbf@
+$ $ exec INJECTION: failed
+$ taint: exec refused for pid 14
+exec ls failed
+$ taint: exec refused for pid 15
+exec rm failed
+$ @85c32dbf@
+cat /important.txt; echo @d9316669@
+$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@d9316669@

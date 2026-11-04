@@ -1,0 +1,385 @@
+From f60f48d997c02f8fdcce94f8a1e231c36ccba288 Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:29:56 +0530
+Subject: [PATCH 12/47] [Member A] A-05: Implement host-side tool validator,
+ planner, and 20 unit tests
+
+---
+ .../test_validator.cpython-313.pyc            | Bin 0 -> 11225 bytes
+ agent_lab/tests/test_validator.py             |  83 ++++++++++++++++++
+ .../__pycache__/config.cpython-313.pyc        | Bin 0 -> 368 bytes
+ .../__pycache__/tools.cpython-313.pyc         | Bin 0 -> 3822 bytes
+ agent_lab/xv6agent/config.py                  |  14 +++
+ agent_lab/xv6agent/planner.py                 |  30 +++++++
+ agent_lab/xv6agent/tools.py                   |  76 ++++++++++++++++
+ logs/G2/test_validator.log                    |   5 ++
+ 8 files changed, 208 insertions(+)
+ create mode 100644 agent_lab/tests/__pycache__/test_validator.cpython-313.pyc
+ create mode 100644 agent_lab/tests/test_validator.py
+ create mode 100644 agent_lab/xv6agent/__pycache__/config.cpython-313.pyc
+ create mode 100644 agent_lab/xv6agent/__pycache__/tools.cpython-313.pyc
+ create mode 100644 agent_lab/xv6agent/config.py
+ create mode 100644 agent_lab/xv6agent/planner.py
+ create mode 100644 agent_lab/xv6agent/tools.py
+ create mode 100644 logs/G2/test_validator.log
+
+diff --git a/agent_lab/tests/__pycache__/test_validator.cpython-313.pyc b/agent_lab/tests/__pycache__/test_validator.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..48fab9bfeb24e96e079ee8509c4535be23276be9
+GIT binary patch
+literal 11225
+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
+N?bs8M_&c5E{}=cr;|Kr%
+
+literal 0
+HcmV?d00001
+
+diff --git a/agent_lab/tests/test_validator.py b/agent_lab/tests/test_validator.py
+new file mode 100644
+index 0000000..585c089
+--- /dev/null
++++ b/agent_lab/tests/test_validator.py
+@@ -0,0 +1,83 @@
++# agent_lab/tests/test_validator.py — 19+ Host unit tests for validate_action
++import unittest
++from agent_lab.xv6agent.tools import validate_action, ValidationError
++
++class TestValidator(unittest.TestCase):
++    def test_01_valid_list_files(self):
++        validate_action({"tool": "list_files", "args": {}})
++
++    def test_02_valid_read_file(self):
++        validate_action({"tool": "read_file", "args": {"path": "/report.txt"}})
++
++    def test_03_valid_read_file_safe(self):
++        validate_action({"tool": "read_file", "args": {"path": "/safe/echo"}})
++
++    def test_04_valid_summarize(self):
++        validate_action({"tool": "summarize", "args": {"text": "hello world"}})
++
++    def test_05_unknown_tool(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "delete_file", "args": {"path": "/important.txt"}})
++
++    def test_06_unknown_tool_shell(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "execute_shell", "args": {"command": "rm important.txt"}})
++
++    def test_07_action_not_dict(self):
++        with self.assertRaises(ValidationError):
++            validate_action(["list_files"])
++
++    def test_08_action_missing_tool(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"args": {}})
++
++    def test_09_action_missing_args(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "list_files"})
++
++    def test_10_extra_keys_in_action(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "list_files", "args": {}, "extra": 123})
++
++    def test_11_list_files_with_args(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "list_files", "args": {"dir": "/"}})
++
++    def test_12_read_file_missing_path(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "read_file", "args": {}})
++
++    def test_13_read_file_relative_path(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "read_file", "args": {"path": "report.txt"}})
++
++    def test_14_read_file_dot_dot(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "read_file", "args": {"path": "/safe/../important.txt"}})
++
++    def test_15_read_file_long_component(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "read_file", "args": {"path": "/this_component_is_way_too_long_for_xv6.txt"}})
++
++    def test_16_read_file_disallowed_path(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "read_file", "args": {"path": "/etc/passwd"}})
++
++    def test_17_read_file_invalid_chars(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "read_file", "args": {"path": "/bad$name.txt"}})
++
++    def test_18_summarize_missing_text(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "summarize", "args": {}})
++
++    def test_19_summarize_wrong_type(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "summarize", "args": {"text": 12345}})
++
++    def test_20_summarize_too_long(self):
++        with self.assertRaises(ValidationError):
++            validate_action({"tool": "summarize", "args": {"text": "A" * 4001}})
++
++if __name__ == "__main__":
++    unittest.main()
+diff --git a/agent_lab/xv6agent/__pycache__/config.cpython-313.pyc b/agent_lab/xv6agent/__pycache__/config.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..9cc21f42b96feb0c1f8d734930b787b6f55b8702
+GIT binary patch
+literal 368
+zcmey&%ge<81RU-6v;G3<#~=<2FhLogWq^#S48aV+jNS}I48crAjKR!BO!^GLEP;$g
+z%;}7ptS>=I{n8;C^c-FW09l&sRowbTsRj8(C3+<lB~@JdnR!Y16<{`>er7I6A~6pl
+z$F3jb>geL@S_PB<DT+_dO#v%p)h|v=ORZwlF9LBjS#B}q7vJJ__H~I5@$_}|4-JVA
+zzQyh97!eN=@^SUM#p~$f;~(zo5+C3g;t{-(;WNlhw*vJu@^e%5Q?iRoa;mcRT~dp)
+zOY#f!i&JwIO!fVPfk?NYC_gJTxkNv|7|u*gPt7Zd&q++uuP8GEbM%w*^U^ZY^$IF)
+zaoFVMr<CTT+7)pFZD0iAVo4zJftit!@i7DE0|Ai+-Wz-Z4cwoYI0Ts*d5buKvH)F_
+BXXF3?
+
+literal 0
+HcmV?d00001
+
+diff --git a/agent_lab/xv6agent/__pycache__/tools.cpython-313.pyc b/agent_lab/xv6agent/__pycache__/tools.cpython-313.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..c0b471e59f7923e3a1e36acb4292ecd4bf24de55
+GIT binary patch
+literal 3822
+zcma)9O>7&-6`ox#$t9QMT9V}`wj!@&!4zSWlpss7q{NPEsg)gD{#h|~Ew#j&T*+&b
+zOJ#Ox%S-|Y2+&%|!3^x6a$z7k<X|I*wx{|S<doc&SQJvXYHA?8_$Jrxp|`#na`_`W
+zXa?lY?3?%A%zHEQeY4NQ;UI#-|L&jHMxgZrd2x%k)_DE^8lNK>$;`V5Bbk*w?=q)Z
+z%u1*W^&y$ti)8P-XT($0$K1TP4~^7}o7=K4!OH$2<|P^b3RxiG!9LkP@0WuzbA*$H
+zz33W;c{wy6s7b<95?o|rk*8#|nWqdqV~pd=6!ZmcF;klYtw<Ls&v(P)b2N`IBO}bp
+z4ED$@<`z9M&Jo{Ja#~g~wSqo{aREOi8F++dVqS+&r*$Q-rqfO^oz54s#T;pe(&_h$
+zO0L!;rqc@=Hq4x+t9k*tJJV^y1b3OVVwzaHQZ!W~oyI(w2K<q8K6$l}SCiT6U{t!E
+zoK%hLW??C5sCj85c}|93d<hq>sTng_FzQWZQPs_KPPvj?zA;K)l4hZhGZIU;un*kQ
+z2bsD-9=}Bn$K!}AkFgGq)%S}UR<jOYSR%nHIfq+P%&QJ(s>^1~;{<b>VL~uD)o=n>
+zRkF101dL)nuVAgDIzFtLMXYDsw1Rs?Mk9OR`8AfLc&^@;LUSOgmXTU(p!S{>5Sk;F
+zw8+dz%}Qlb=%U}1H)@%6HGaf{$L&`cnM<JwFjZQ|@HT1qsv6ln2*G%P#yD<E_Pg5d
+zcssoDZa<wdjI^^fX54|^V+=Nl47LMJhY>2YxjwUym9t=*V$QQ?MT7(-A)VEk6wy3`
+zknWiS{c1_oBa{Q<_aHjZZ^~dW<#~&Zpy7I+RA!E>J}nn_xvfSGCs+WVJJv-ZGdkYl
+zIrOq;GEZ3DcGufQa=Lbu30P6(AkFWq)-&wpubzw6cp@pZGoD4X2sxDCuQLlMCeD;P
+z$@Z1<MZ=V?sFETXaNP7ohe?+DTYIh;g&Z71X#fr;Hl>>ym?dK+HjyapZD{HRQvwVz
+z6-}3-iA1#INhXpdHkl~JU#*1I9GvqTDriT+GQU&+2r!MOB=Mz#)TS<#)a8t-W({fR
+zh?KdiU?pR!*cg{eZNHg25x=a&OM~&TL^}TKL;a=0J4|bnG9*pEL9nXTfiGz&3u>}7
+zK&?m+Fn=YNE8JAGFsh0(ngQ7%0&>8|rI_FZHAB-O8G1%_JdidD9!`*^#~|r(cva6<
+zTV7)+r<sl?r|J%iRmYoG%*<8HL6A=P#F;baemOOnK7V3%T8?p;><Ncia=c5BXoCO@
+zR76#Rf?<uphQ^?nYMM+KM?v-){Ea=ZV^+|X&{@ttIJqH66+zmHykYf>*pX3-AKeth
+zJI7a#uMKYq`zykJ+BIoMrYwGH(=XgMKmL%4#_h<2#ZPSdLuKyckJh*^!uP}L*^RD4
+zm99fn;jA5*vG|!MUEN;<?+4e1ABc7+{s*x<^wrRv3-`s9DJvBJ`>xL0+?EizZGJjd
+z#-ASBYVWoBPk(#ly8)|Dw%cc|(Cn7jc4zsMWvlD(!|aAQY>UHG>AZCzRXKmj>id=5
+ze%T6LeilG&d$vP}58WHx=!jN2qP9Q!C+;uepT)2Fjlolu!Bb>b()72xzvHc*3wGq9
+z#b4a^prO-@<&XaN-y#Ypj1c7Kn{aS)ko#tz51x(>whusf3lNhmQy|`iL;O>LSlQov
+z*k294E~&dmR%T>&h#kLKgV;KJ%5{h$peQp0-vP|v>Ofm;6E!e%^a273XeR_wYH0Z6
+z+)=?NGe;6Z3xyW~84XQuirEPnO(U}Zhm0D2e2ozs<E3acvY$rcc}dPwIoAN>6#FU~
+z+nGt-dub#Nnb3VHp9_Qvphr_wft0Tm)-TB^E)I}N?ffbKkJtrM{#LsbBMak~YQ#Yf
+zA}uLa4w1RLF-rilpc$r`?*M$Wa)idlH|3K5$*U*2eu0kKsw0BWI(f>wD3uYSZsfnM
+zVMFKAPUiyPKnNh#F$4D%xc4}mf)|a_aP=TGkw8|<)DT`>hR)nA>4PXSh#r=r#3cGr
+zX)k$~$o;L!u1X%INKwD87jEhj(E)gVo!B&~5%=Wsgl}QOs+dGo>d9*c0P3RT-mxUG
+zD&~O<28<Xu=_=~#@)BI=0FhgIa3}FWKoi4V1mO<qjoioTdQD?jr>L#N>XqJXRdU%S
+zuPkf%VqOBUUIdaWEJ#NN2M3!70~4-}1@Jzo9F9Z-1fZG@cU`?@R4<a<q{};d?%Wxf
+zqBEANCS<2M97!8KM4BFm*73k)(&6F0dPB>?-O^vngyV%6utEbe$l4P8r=>~)Vx0u4
+z3y4QShj=v>>NK$MAiE(Ps0atXG#-xrapKX$S8v<VvBwKvFIaD%wWDV#oXd7(*5YS3
+zg|_m+)nhA@^~TFYQl|#t-iYn*0`v9AL-Wy9tLIHSa@69FR!t^1gx-qKOTCZTk#UP3
+z|5s2fbE}8S*DAr@m6KboZ(@7-$nVEK8@oGUi~CompG4YL^_5?I?~hPmKlb?MW6kQB
+zwj-x3{?wDu?zPPQKqb_-GWESbL^X~+?tJXGdfu@kCoKNN6X3EBZ2#UZ9(ZtV^t0Sw
+z`2(AQaCx5{=-w1N%0FNI5U5FfeXajX&xY7v5&H@6^!?0kKWT+dx}0U&!agdWv)kvb
+z&^!=IsQU@H>9zxJZ1N#^5BAW{gP4GO$zq}^p$DemnnFJhs(T?0eK<)TWLH$T!(q}Q
+z>qWn5svj8yP#pfP>NnCcJO;0@j>ss%W81?p%nvB=548IQ$1s7i_5wlmEQmV0?oRz}
+z_iJ~jo_ReTzU?5|(_Nl+1??{jo^^x+?2320r=5|RHP1F8^*Z;0*4qQUOn7Z_8$q=`
+K`yW!#x&04gLrk{-
+
+literal 0
+HcmV?d00001
+
+diff --git a/agent_lab/xv6agent/config.py b/agent_lab/xv6agent/config.py
+new file mode 100644
+index 0000000..147f5c5
+--- /dev/null
++++ b/agent_lab/xv6agent/config.py
+@@ -0,0 +1,14 @@
++# agent_lab/xv6agent/config.py — Configuration for xv6agent
++import os
++
++CMD_TIMEOUT_S = 15.0
++MAX_CMD_LEN = 80
++ALLOWED_PATHS = [
++    "/report.txt",
++    "/inbox.txt",
++    "/important.txt",
++    "/README",
++    "/inbox_cmd.txt",
++    "/safe",
++    "/r.txt"
++]
+diff --git a/agent_lab/xv6agent/planner.py b/agent_lab/xv6agent/planner.py
+new file mode 100644
+index 0000000..35e77bf
+--- /dev/null
++++ b/agent_lab/xv6agent/planner.py
+@@ -0,0 +1,30 @@
++# agent_lab/xv6agent/planner.py — Deterministic and simulated gullible planners
++import re
++
++class DeterministicPlanner:
++    def plan(self, user_request: str, history: list) -> dict:
++        if not history:
++            return {"tool": "list_files", "args": {}}
++        last_step = history[-1]
++        if last_step.get("tool") == "list_files":
++            return {"tool": "read_file", "args": {"path": "/report.txt"}}
++        if last_step.get("tool") == "read_file":
++            content = last_step.get("output", "")
++            return {"tool": "summarize", "args": {"text": content}}
++        return None
++
++class SimulatedGulliblePlanner:
++    def plan(self, user_request: str, history: list) -> dict:
++        for step in reversed(history):
++            output = step.get("output", "")
++            # Look for injected command instructions
++            m = re.search(r"INJECTION:\s*(\w+)\s+(.+)", output)
++            if m:
++                tool, arg = m.group(1), m.group(2).strip()
++                if tool == "delete_file":
++                    return {"tool": "delete_file", "args": {"path": arg}}
++                elif tool == "execute_shell":
++                    return {"tool": "execute_shell", "args": {"command": arg}}
++                elif tool == "read_file":
++                    return {"tool": "read_file", "args": {"path": arg}}
++        return {"tool": "list_files", "args": {}}
+diff --git a/agent_lab/xv6agent/tools.py b/agent_lab/xv6agent/tools.py
+new file mode 100644
+index 0000000..b1e2109
+--- /dev/null
++++ b/agent_lab/xv6agent/tools.py
+@@ -0,0 +1,76 @@
++# agent_lab/xv6agent/tools.py — Tools and validation logic for xv6agent
++import re
++from . import config
++
++class ValidationError(Exception):
++    pass
++
++TOOLS = {
++    "list_files": {
++        "required": set(),
++        "optional": set()
++    },
++    "read_file": {
++        "required": {"path"},
++        "optional": set()
++    },
++    "summarize": {
++        "required": {"text"},
++        "optional": set()
++    }
++}
++
++def validate_path(path: str) -> None:
++    if not isinstance(path, str):
++        raise ValidationError("path must be a string")
++    if not path.startswith("/"):
++        raise ValidationError("path must be absolute (start with /)")
++    if ".." in path:
++        raise ValidationError("path must not contain '..'")
++    if "/./" in path or path.endswith("/."):
++        raise ValidationError("path must not contain relative '.' components")
++    
++    parts = [p for p in path.split("/") if p]
++    for part in parts:
++        if len(part) > 14:
++            raise ValidationError(f"path component exceeds 14 characters: {part!r}")
++        if not re.match(r"^[A-Za-z0-9._-]+$", part):
++            raise ValidationError(f"path component contains invalid characters: {part!r}")
++    
++    if path not in config.ALLOWED_PATHS and not path.startswith("/safe/"):
++        raise ValidationError(f"path not in allowed exercise allowlist: {path!r}")
++
++def validate_action(action: dict) -> None:
++    if not isinstance(action, dict) or set(action.keys()) != {"tool", "args"}:
++        raise ValidationError("action must be a dict with exactly {'tool', 'args'}")
++    name = action["tool"]
++    args = action["args"]
++    if not isinstance(name, str):
++        raise ValidationError("tool name must be a string")
++    if name not in TOOLS:
++        raise ValidationError(f"unknown tool: {name!r}")
++    if not isinstance(args, dict):
++        raise ValidationError("args must be a dictionary")
++    
++    req = TOOLS[name]["required"]
++    opt = TOOLS[name]["optional"]
++    provided = set(args.keys())
++    
++    missing = req - provided
++    if missing:
++        raise ValidationError(f"missing required argument(s): {missing}")
++    
++    extra = provided - (req | opt)
++    if extra:
++        raise ValidationError(f"unexpected argument(s): {extra}")
++    
++    if name == "read_file":
++        validate_path(args["path"])
++    elif name == "summarize":
++        text = args["text"]
++        if not isinstance(text, str):
++            raise ValidationError("text argument must be a string")
++        if len(text) > 4000:
++            raise ValidationError("text argument exceeds maximum length of 4000 characters")
++    elif name == "list_files":
++        pass
+diff --git a/logs/G2/test_validator.log b/logs/G2/test_validator.log
+new file mode 100644
+index 0000000..c432f5a
+--- /dev/null
++++ b/logs/G2/test_validator.log
+@@ -0,0 +1,5 @@
++....................
++----------------------------------------------------------------------
++Ran 20 tests in 0.001s
++
++OK
+-- 
+2.48.1
+

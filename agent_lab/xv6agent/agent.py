@@ -55,8 +55,8 @@ class AgentRunner:
             "command_sent": cmd_sent,
             "guest_output": guest_output,
             "kernel_logs": kernel_logs,
-            "final_file_state": "intact"
+            "final_file_state": "not_checked"
         }
         self.traces.append(trace_record)
-        self.history.append({"tool": proposed.get("tool"), "output": guest_output})
+        self.history.append({"tool": proposed.get("tool") if isinstance(proposed, dict) else None, "output": guest_output})
         return trace_record

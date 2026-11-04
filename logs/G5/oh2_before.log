@@ -1,0 +1,25 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       3d1d451d7a0e2d309fe99c5ce9b4d9797881a894
+DATE:         2026-11-02T10:45:41+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      ftest oh2
+================================================================
+SOURCE_DIFF_SHA256: c9f40160b38a3355842aac804ebb23a6a8866af48c5805d442533080fa44ca4f
+SOURCE_DIRTY: True
+BOOTS: [{"disk_path": "/tmp/xv6-bridge-9k2r_yjb/fs.img", "sha256": "46236c2dfac8d15768e8003e9df6a718cbb66c10b62b684db909bb991fa71c62"}]
+RESULT: suite failed: SUMMARY=(0, 2, 0), observed=(0, 2, 0)
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ ftest oh2; echo @@DONE2d0527d97e14@@
+FAIL T-OH2 tainted mkdir refused
+FAIL T-OH2 tainted mknod refused
+SUMMARY pass=0 fail=2 inconclusive=0
+@@DONE2d0527d97e14@@

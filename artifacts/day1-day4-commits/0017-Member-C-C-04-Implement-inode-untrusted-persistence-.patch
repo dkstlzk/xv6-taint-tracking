@@ -1,0 +1,41 @@
+From 91a8561c037ca25ec6521b5920d584fee5413b8a Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:31:25 +0530
+Subject: [PATCH 17/47] [Member C] C-04: Implement inode untrusted persistence
+ across ilock, iupdate, and iput lifecycle
+
+---
+ kernel/fs.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/kernel/fs.c b/kernel/fs.c
+index 7a4381a..db15a9a 100644
+--- a/kernel/fs.c
++++ b/kernel/fs.c
+@@ -237,6 +237,7 @@ iupdate(struct inode *ip)
+   dip->minor = ip->minor;
+   dip->nlink = ip->nlink;
+   dip->size = ip->size;
++  dip->untrusted = ip->untrusted;
+   memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
+   log_write(bp);
+   brelse(bp);
+@@ -310,6 +311,7 @@ ilock(struct inode *ip)
+     ip->minor = dip->minor;
+     ip->nlink = dip->nlink;
+     ip->size = dip->size;
++    ip->untrusted = dip->untrusted;
+     memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
+     brelse(bp);
+     ip->valid = 1;
+@@ -362,6 +364,7 @@ iput(struct inode *ip)
+     acquiresleep(&ip->lock);
+     release(&itable.lock);
+ 
++    ip->untrusted = 0;
+     itrunc(ip); // free the data blocks (type stays nonzero on disk)
+     ip->valid = 0;
+ 
+-- 
+2.48.1
+

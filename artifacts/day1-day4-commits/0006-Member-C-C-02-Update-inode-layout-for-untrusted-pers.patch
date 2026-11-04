@@ -1,0 +1,51 @@
+From 1f4bf2b76d215a92f94756289b47a2b332f4c717 Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:28:35 +0530
+Subject: [PATCH 06/47] [Member C] C-02: Update inode layout for untrusted
+ persistence, NDIRECT 11, and static assertion
+
+---
+ kernel/file.h | 1 +
+ kernel/fs.h   | 6 ++++--
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/file.h b/kernel/file.h
+index 03ea70e..c810678 100644
+--- a/kernel/file.h
++++ b/kernel/file.h
+@@ -26,6 +26,7 @@ struct inode {
+   short minor;
+   short nlink;
+   uint size;
++  uint untrusted;          // copy of disk inode untrusted flag
+   uint addrs[NDIRECT + 1];
+ };
+ 
+diff --git a/kernel/fs.h b/kernel/fs.h
+index b659291..99573d1 100644
+--- a/kernel/fs.h
++++ b/kernel/fs.h
+@@ -23,7 +23,7 @@ struct superblock {
+ 
+ #define FSMAGIC 0x10203040
+ 
+-#define NDIRECT   12
++#define NDIRECT   11
+ #define NINDIRECT (BSIZE / sizeof(uint))
+ #define MAXFILE   (NDIRECT + NINDIRECT)
+ #define NLINK_MAX 32767 // nlink is a short; refuse links past its maximum
+@@ -35,8 +35,10 @@ struct dinode {
+   short minor;             // Minor device number (T_DEVICE only)
+   short nlink;             // Number of links to inode in file system
+   uint size;               // Size of file (bytes)
+-  uint addrs[NDIRECT + 1]; // Data block addresses
++  uint untrusted;          // new: 1 = untrusted
++  uint addrs[NDIRECT + 1]; // Data block addresses (11 direct + 1 indirect)
+ };
++_Static_assert(sizeof(struct dinode) == 64, "dinode size");
+ 
+ // Inodes per block.
+ #define IPB (BSIZE / sizeof(struct dinode))
+-- 
+2.48.1
+

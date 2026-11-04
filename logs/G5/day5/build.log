@@ -1,0 +1,12 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       6a17a2ff18372f7d0b9e0969de5a00a291b9c315
+DATE:         2026-11-02T10:56:28+05:30
+CPUS:         not set (default 3)
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      make kernel/kernel fs.img; host tests; guest suites
+================================================================
+make: 'kernel/kernel' is up to date.
+make: 'fs.img' is up to date.

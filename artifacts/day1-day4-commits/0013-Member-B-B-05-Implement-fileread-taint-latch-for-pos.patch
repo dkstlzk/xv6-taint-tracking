@@ -1,0 +1,31 @@
+From 5188be0bee810eeb8f905330a7e813e57eb8d3fd Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:30:09 +0530
+Subject: [PATCH 13/47] [Member B] B-05: Implement fileread taint latch for
+ positive-byte reads from untrusted inodes
+
+---
+ kernel/file.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/file.c b/kernel/file.c
+index 31693e9..750085f 100644
+--- a/kernel/file.c
++++ b/kernel/file.c
+@@ -119,8 +119,12 @@ fileread(struct file *f, uint64 addr, int n)
+     r = devsw[f->major].read(1, addr, n);
+   } else if (f->type == FD_INODE) {
+     ilock(f->ip);
+-    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0)
++    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0) {
+       f->off += r;
++      if (f->ip->untrusted) {
++        myproc()->tainted = 1;
++      }
++    }
+     iunlock(f->ip);
+   } else {
+     panic("fileread");
+-- 
+2.48.1
+

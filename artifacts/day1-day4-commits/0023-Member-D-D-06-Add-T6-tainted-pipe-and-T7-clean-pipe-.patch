@@ -1,0 +1,116 @@
+From b18052bdc5671021c31226413bc645a79f1e27c4 Mon Sep 17 00:00:00 2001
+From: Anshika <anshikabvbvpn0822@gmail.com>
+Date: Mon, 26 Oct 2026 22:32:28 +0530
+Subject: [PATCH 23/47] [Member D] D-06: Add T6 tainted-pipe and T7 clean-pipe
+ tests to ptest.c
+
+---
+ user/ptest.c | 85 +++++++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 81 insertions(+), 4 deletions(-)
+
+diff --git a/user/ptest.c b/user/ptest.c
+index 779ecd6..9f8aa7a 100644
+--- a/user/ptest.c
++++ b/user/ptest.c
+@@ -1,17 +1,94 @@
+ #include "kernel/types.h"
+ #include "kernel/stat.h"
++#include "kernel/fcntl.h"
+ #include "user/user.h"
+ #include "user/tlib.h"
+ 
+ // user/ptest.c — Pipe and exec containment test harness (Member D)
+-//
+-// Plan reference: Task D-02 (compiling stub / harness; main exits 0)
+-// Future milestones implement: T6 (pipe taint), T7 (clean pipe), T8 (mixed writers),
+-// T10 (exec containment), T12 (taint survives exec), T14 (pipe dup), T20 (exec /safe, /).
++// Tests: T6 (tainted pipe writer), T7 (clean pipe writer)
++
++void
++test_t6_tainted_pipe(void)
++{
++  int p[2];
++  if (pipe(p) < 0) {
++    CHECK("T6", "pipe creation", 0);
++    return;
++  }
++
++  int pid = fork();
++  if (pid < 0) {
++    CHECK("T6", "fork", 0);
++    return;
++  }
++  if (pid == 0) {
++    // Taint child by creating and reading untrusted file
++    int fd = open("/untrusted_p6.txt", O_CREATE | O_WRONLY);
++    write(fd, "bad", 3);
++    close(fd);
++    marktaint("/untrusted_p6.txt");
++    fd = open("/untrusted_p6.txt", O_RDONLY);
++    char buf[4];
++    read(fd, buf, 3);
++    close(fd);
++
++    close(p[0]);
++    write(p[1], "msg", 3);
++    close(p[1]);
++    exit(0);
++  } else {
++    close(p[1]);
++    int status;
++    wait(&status);
++
++    char buf[4];
++    int n = read(p[0], buf, 3);
++    close(p[0]);
++
++    int reader_taint = istainted();
++    CHECK("T6", "clean reader of pipe written by tainted writer becomes tainted", n > 0 && reader_taint == 1);
++  }
++}
++
++void
++test_t7_clean_pipe(void)
++{
++  int p[2];
++  if (pipe(p) < 0) {
++    CHECK("T7", "pipe creation", 0);
++    return;
++  }
++
++  int pid = fork();
++  if (pid < 0) {
++    CHECK("T7", "fork", 0);
++    return;
++  }
++  if (pid == 0) {
++    // Clean child writes to pipe
++    close(p[0]);
++    write(p[1], "clean", 5);
++    close(p[1]);
++    exit(0);
++  } else {
++    close(p[1]);
++    int status;
++    wait(&status);
++
++    char buf[6];
++    int n = read(p[0], buf, 5);
++    close(p[0]);
++
++    int reader_taint = istainted();
++    CHECK("T7", "clean reader of clean-only pipe remains clean", n > 0 && reader_taint == 0);
++  }
++}
+ 
+ int
+ main(int argc, char *argv[])
+ {
++  run_in_child(test_t6_tainted_pipe);
++  run_in_child(test_t7_clean_pipe);
+   tlib_summary();
+   exit(0);
+ }
+-- 
+2.48.1
+

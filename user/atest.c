@@ -1,211 +1,188 @@
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "kernel/fcntl.h"
+#include "kernel/syscall.h"
 #include "user/user.h"
 #include "user/tlib.h"
 
-// user/atest.c — Red-team adversarial attack harness (Member A)
-// Implements attacks: A1, A2, A3, A8, A9, A17, A18 (+ A4, A16 OH)
-// Each test reports PASS with blocking mechanism in the description.
+static void
+require(int condition)
+{
+  if (!condition) { fprintf(2, "atest: setup failed\n"); exit(1); }
+}
 
 static void
-taint_via_file(void)
+put(char *path, char *text)
 {
-  int fd = open("/untrusted_atest_seed.txt", O_CREATE | O_WRONLY);
-  write(fd, "bad", 3);
-  close(fd);
-  marktaint("/untrusted_atest_seed.txt");
-  fd = open("/untrusted_atest_seed.txt", O_RDONLY);
-  char buf[4];
-  read(fd, buf, 3);
+  int fd = open(path, O_CREATE | O_WRONLY | O_TRUNC);
+  require(fd >= 0 && write(fd, text, strlen(text)) == strlen(text));
   close(fd);
 }
 
-// A1: Unlink clean file via pipe taint
-void
-attack_a1_unlink_pipe_taint(void)
+static int
+equals(char *path, char *text)
 {
-  int p[2];
-  pipe(p);
-  int pid = fork();
-  if (pid == 0) {
-    taint_via_file();
-    close(p[0]);
-    write(p[1], "X", 1);
-    close(p[1]);
-    exit(0);
+  char data[32];
+  int fd = open(path, O_RDONLY);
+  if (fd < 0) return 0;
+  int count = read(fd, data, sizeof(data));
+  close(fd);
+  return count == strlen(text) && memcmp(data, text, count) == 0;
+}
+
+static void
+taint(void)
+{
+  put("/aseed", "taint");
+  require(marktaint("/aseed") == 0 && equals("/aseed", "taint") && istainted() == 1);
+}
+
+static void
+wait_ok(int child)
+{
+  int status = -1;
+  require(child >= 0 && wait(&status) == child && status == 0);
+}
+
+static void
+attack_a1(void)
+{
+  put("/victim.txt", "preserve");
+  int fds[2];
+  require(pipe(fds) == 0);
+  int child = fork();
+  require(child >= 0);
+  if (child == 0) {
+    close(fds[0]); taint();
+    require(write(fds[1], "T", 1) == 1);
+    close(fds[1]); exit(0);
   }
-  close(p[1]);
-  int s;
-  wait(&s);
-
-  char b[2];
-  read(p[0], b, 1);
-  close(p[0]);
-
-  // Process consumed byte from tainted pipe; attempt unlink clean file
-  int fd = open("/clean_a1.txt", O_CREATE | O_WRONLY);
-  write(fd, "ok", 2);
-  close(fd);
-
-  int r = unlink("/clean_a1.txt");
-  CHECK("A1", "unlink refused via pipe taint", r == -1);
+  close(fds[1]); wait_ok(child);
+  char byte;
+  require(istainted() == 0 && read(fds[0], &byte, 1) == 1 && istainted() == 1);
+  close(fds[0]);
+  CHECK("A1", "pipe propagation and unlink gate preserve victim", unlink("/victim.txt") == -1 && equals("/victim.txt", "preserve"));
 }
 
-// A2: Write to clean file via pipe taint
-void
-attack_a2_write_pipe_taint(void)
+static void
+attack_a2(void)
 {
-  int p[2];
-  pipe(p);
-  int pid = fork();
-  if (pid == 0) {
-    taint_via_file();
-    close(p[0]);
-    write(p[1], "X", 1);
-    close(p[1]);
-    exit(0);
+  put("/clean_cfg.txt", "preserve");
+  unlink("/launder.txt");
+  int child = fork();
+  require(child >= 0);
+  if (child == 0) { taint(); put("/launder.txt", "payload"); exit(0); }
+  wait_ok(child);
+  require(istainted() == 0);
+  int fd = open("/clean_cfg.txt", O_WRONLY);
+  require(fd >= 0 && equals("/launder.txt", "payload") && istainted() == 1);
+  int result = write(fd, "damage", 6);
+  close(fd);
+  CHECK("A2", "born-untrusted inode and filewrite gate block laundering", result == -1 && equals("/clean_cfg.txt", "preserve"));
+}
+
+static void
+attack_a3(void)
+{
+  put("/secret.txt", "secret"); put("/victim.txt", "preserve");
+  unlink("/alias.txt");
+  require(marktaint("/secret.txt") == 0 && link("/secret.txt", "/alias.txt") == 0);
+  require(equals("/alias.txt", "secret") && istainted() == 1);
+  CHECK("A3", "hard-link alias shares inode taint; unlink gate", unlink("/victim.txt") == -1 && equals("/victim.txt", "preserve"));
+}
+
+static void
+attack_a4(void)
+{
+  mkdir("/safe"); unlink("/safe/rm"); taint();
+  CHECK("A4", "link gate blocks inserting rm into safe", link("/rm", "/safe/rm") == -1);
+}
+
+static void
+attack_a8(void)
+{
+  put("/victim.txt", "preserve"); taint();
+  register uint64 argument asm("a0") = (uint64)"/victim.txt";
+  register uint64 number asm("a7") = SYS_unlink;
+  asm volatile("ecall" : "+r"(argument) : "r"(number) : "memory");
+  CHECK("A8", "raw ecall reaches kernel unlink gate", (int)argument == -1 && equals("/victim.txt", "preserve"));
+}
+
+static void
+attack_a9(void)
+{
+  mkdir("/safe"); unlink("/safe/atest");
+  require(link("/atest", "/safe/atest") == 0);
+  put("/victim.txt", "preserve"); taint();
+  int child = fork();
+  require(child >= 0);
+  if (child == 0) {
+    char *args[] = {"atest", "survive", 0};
+    exec("/safe/atest", args);
+    exit(2);
   }
-  close(p[1]);
-  int s;
-  wait(&s);
-
-  char b[2];
-  read(p[0], b, 1);
-  close(p[0]);
-
-  int fd = open("/clean_a2.txt", O_CREATE | O_WRONLY);
-  int r = write(fd, "malicious", 9);
-  close(fd);
-  CHECK("A2", "write refused via pipe taint", r < 0);
+  int status = -1;
+  require(wait(&status) == child);
+  CHECK("A9", "taint survives allowed exec; unlink and open gates hold", status == 0 && equals("/victim.txt", "preserve"));
 }
 
-// A3: Exec outside /safe via pipe taint
-void
-attack_a3_exec_outside_safe_pipe(void)
+static void
+attack_a16(void)
 {
-  int p[2];
-  pipe(p);
-  int pid = fork();
-  if (pid == 0) {
-    taint_via_file();
-    close(p[0]);
-    write(p[1], "X", 1);
-    close(p[1]);
-    exit(0);
+  mkdir("/safe"); unlink("/safe/evil");
+  int child = fork();
+  require(child >= 0);
+  if (child == 0) {
+    taint();
+    int source = open("/echo", O_RDONLY);
+    int target = open("/safe/evil", O_CREATE | O_WRONLY);
+    require(source >= 0 && target >= 0);
+    char bytes[512]; int count, total = 0;
+    while ((count = read(source, bytes, sizeof(bytes))) > 0) {
+      require(write(target, bytes, count) == count); total += count;
+    }
+    require(count == 0 && total > 512);
+    close(source); close(target); exit(0);
   }
-  close(p[1]);
-  int s;
-  wait(&s);
-
-  char b[2];
-  read(p[0], b, 1);
-  close(p[0]);
-
-  char *args[] = {"echo", 0};
-  int r = exec("/echo", args);
-  CHECK("A3", "exec outside /safe refused via pipe taint", r == -1);
+  wait_ok(child);
+  child = fork();
+  require(child >= 0);
+  if (child == 0) {
+    char *args[] = {"evil", "valid-ELF-control", 0};
+    exec("/safe/evil", args); exit(2);
+  }
+  wait_ok(child);
+  taint();
+  char *args[] = {"evil", 0};
+  CHECK("A16", "born-untrusted valid ELF refused inside safe", exec("/safe/evil", args) == -1);
 }
 
-// A4: Link creation refusal (OH1)
-void
-attack_a4_link_laundering(void)
+static void
+attack_a17(void)
 {
-  int fd = open("/clean_a4.txt", O_CREATE | O_WRONLY);
-  write(fd, "data", 4);
-  close(fd);
-
-  taint_via_file();
-  int r = link("/clean_a4.txt", "/link_a4.txt");
-  CHECK("A4", "link creation refused for tainted caller (OH1)", r == -1);
+  put("/clean.txt", "preserve"); taint();
+  CHECK("A17", "create never relabels existing clean inode", open("/clean.txt", O_CREATE | O_WRONLY) == -1 && equals("/clean.txt", "preserve"));
 }
 
-// A8: Raw syscall evasion (bypassing libc wrapper using inline ecall)
-void
-attack_a8_raw_ecall_evasion(void)
+static void
+attack_a18(void)
 {
-  int fd = open("/clean_a8.txt", O_CREATE | O_WRONLY);
-  write(fd, "data", 4);
-  close(fd);
-
-  taint_via_file();
-
-  // Raw ecall for SYS_unlink (18) with a0 = "/clean_a8.txt"
-  char *path = "/clean_a8.txt";
-  register uint64 a0 asm("a0") = (uint64)path;
-  register uint64 a7 asm("a7") = 18; // SYS_unlink
-  asm volatile("ecall" : "+r"(a0) : "r"(a7) : "memory");
-
-  int res = (int)a0;
-  CHECK("A8", "raw ecall unlink refused by kernel enforcement", res == -1);
-}
-
-// A9: Exec of untrusted binary inside /safe
-void
-attack_a9_exec_untrusted_in_safe(void)
-{
-  mkdir("/safe");
-  // Create an untrusted binary inside /safe
-  int fd = open("/safe/malicious", O_CREATE | O_WRONLY);
-  write(fd, "fake_elf", 8);
-  close(fd);
-  marktaint("/safe/malicious");
-
-  taint_via_file();
-  char *args[] = {"malicious", 0};
-  int r = exec("/safe/malicious", args);
-  CHECK("A9", "exec of untrusted binary refused even inside /safe", r == -1);
-}
-
-// A16: Directory laundering via /safe/.. (OH3)
-void
-attack_a16_dir_traversal_laundering(void)
-{
-  mkdir("/safe");
-  taint_via_file();
-  char *args[] = {"echo", 0};
-  int r = exec("/safe/../echo", args);
-  CHECK("A16", "directory traversal escaping /safe refused", r == -1);
-}
-
-// A17: Truncate clean file via sys_open
-void
-attack_a17_open_trunc_laundering(void)
-{
-  int fd = open("/clean_a17.txt", O_CREATE | O_WRONLY);
-  write(fd, "preserve", 8);
-  close(fd);
-
-  taint_via_file();
-  int bad_fd = open("/clean_a17.txt", O_WRONLY | O_TRUNC);
-  CHECK("A17", "clean file truncation refused via sys_open gate", bad_fd < 0);
-}
-
-// A18: Append to clean file via sys_open
-void
-attack_a18_open_append_laundering(void)
-{
-  int fd = open("/clean_a18.txt", O_CREATE | O_WRONLY);
-  write(fd, "initial", 7);
-  close(fd);
-
-  taint_via_file();
-  int bad_fd = open("/clean_a18.txt", O_WRONLY);
-  CHECK("A18", "clean file write open refused via sys_open gate", bad_fd < 0);
+  put("/clean.txt", "preserve"); taint();
+  CHECK("A18", "open gate precedes truncation", open("/clean.txt", O_WRONLY | O_TRUNC) == -1 && equals("/clean.txt", "preserve"));
 }
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-  run_in_child(attack_a1_unlink_pipe_taint);
-  run_in_child(attack_a2_write_pipe_taint);
-  run_in_child(attack_a3_exec_outside_safe_pipe);
-  run_in_child(attack_a4_link_laundering);
-  run_in_child(attack_a8_raw_ecall_evasion);
-  run_in_child(attack_a9_exec_untrusted_in_safe);
-  run_in_child(attack_a16_dir_traversal_laundering);
-  run_in_child(attack_a17_open_trunc_laundering);
-  run_in_child(attack_a18_open_append_laundering);
-  tlib_summary();
-  exit(0);
+  if (argc == 2 && strcmp(argv[1], "survive") == 0)
+    exit(istainted() == 1 && unlink("/victim.txt") == -1 && open("/victim.txt", O_WRONLY) == -1 ? 0 : 1);
+  if (argc == 2 && strcmp(argv[1], "a8") == 0)
+    run_in_child(attack_a8);
+  else if (argc == 1) {
+    run_in_child(attack_a1); run_in_child(attack_a2); run_in_child(attack_a3);
+    run_in_child(attack_a4); run_in_child(attack_a8); run_in_child(attack_a9);
+    run_in_child(attack_a16); run_in_child(attack_a17); run_in_child(attack_a18);
+  } else
+    CHECK("ARGS", "invalid arguments", 0);
+  tlib_summary(); exit(0);
 }

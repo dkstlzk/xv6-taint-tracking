@@ -1,0 +1,39 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       686f1c6e745bba87d3a6647417acffeca465c487
+DATE:         2026-11-02T10:47:51+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      gdb break create on tainted mkdir; ftest oh2
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+
+RAW TRANSCRIPT
+s_sstatus (x=2) at kernel/riscv.h:67
+67	  __asm__ __volatile__("csrs sstatus, %0" ::"rK"(x) : "memory");
+Breakpoint 1 at 0x80004dd0: file kernel/sysfile.c, line 270.
+
+Breakpoint 1, create (path=path@entry=0x3fffff5f30 "/bad-directory", type=type@entry=1, major=major@entry=0, minor=minor@entry=0) at kernel/sysfile.c:270
+270	{
+$1 = 1
+$2 = 1
+#0  create (path=path@entry=0x3fffff5f30 "/bad-directory", type=type@entry=1, major=major@entry=0, minor=minor@entry=0) at kernel/sysfile.c:270
+#1  0x0000000080005558 in sys_mkdir () at kernel/sysfile.c:426
+#2  0x000000008000288e in syscall () at kernel/syscall.c:152
+#3  0x000000008000260e in usertrap () at kernel/trap.c:68
+#4  0x0000003ffffff09c in ?? ()
+[Inferior 1 (process 1) detached]
+
+GUEST
+
+xv6 kernel is booting
+
+init: starting sh
+$ ftest oh2; echo @@DONE7ce6608116a5@@
+FAIL T-OH2 tainted mkdir refused
+FAIL T-OH2 tainted mknod refused
+SUMMARY pass=0 fail=2 inconclusive=0
+@@DONE7ce6608116a5@@
