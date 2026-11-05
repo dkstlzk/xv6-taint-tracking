@@ -271,6 +271,11 @@ create(char *path, short type, short major, short minor)
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
+  if (myproc()->tainted && type != T_FILE) {
+    printk("taint: write refused for pid %d\n", myproc()->pid);
+    return 0;
+  }
+
   if ((dp = nameiparent(path, name)) == 0)
     return 0;
 
