@@ -65,8 +65,19 @@ project_docs/xv6_riscv_handbook_edition5.tex
 # PDFs & latex files
 *.pdf
 *.tex
-
+# Python cache
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+
+# Reproducible build/runtime outputs
+/kernel/kernel
+/mkfs/mkfs
+/user/_*
+/user/usys.S
+*.asm
+*.sym
+/*.img
+/fs_staging/
+/.gdbinit
+/artifacts/packages/

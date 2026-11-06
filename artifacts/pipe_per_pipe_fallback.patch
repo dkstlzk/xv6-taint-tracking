@@ -1,0 +1,8 @@
+diff --git a/kernel/pipe.c b/kernel/pipe.c
+--- a/kernel/pipe.c
++++ b/kernel/pipe.c
+@@ -133,3 +133,3 @@
+   }
+-  int taints = pi->has_taint && (int)(pi->tainted_hi - pi->nread) > 0;
++  int taints = pi->has_taint;
+   for (i = 0; i < n; i++) { //DOC: piperead-copy

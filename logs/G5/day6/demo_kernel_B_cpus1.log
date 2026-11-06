@@ -1,0 +1,31 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       bf597e05a7fb4026b9f46ae5aaed309f13194873
+DATE:         2026-11-02T11:09:01+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      kernel demo Run B
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+KERNEL_TREE: /home/parneeka/Desktop/OS_proj/demo/os-project
+KERNEL_SHA256: d65af5f1ccd4a3a08052517254536b9cd6a6a2f4d9cb8f6d3fd28fc711ad03ce
+BASELINE_REVISION: current project
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ echo protected > /important.txt; echo @8633dc50@
+@8633dc50@
+echo rm /important.txt > /inbox_cmd.txt; echo @a33b1e60@
+$ @a33b1e60@
+cat /inbox_cmd.txt | sh; echo @15b6ec5f@
+$ $ $ @15b6ec5f@
+cat /important.txt; echo @92110f6c@
+$ cat: cannot open /important.txt
+@92110f6c@

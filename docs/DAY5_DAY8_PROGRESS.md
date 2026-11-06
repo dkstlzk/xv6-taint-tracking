@@ -42,3 +42,22 @@ may deliberately fail and are not gate passes. Each log names its source commit;
   it is not a claim of an interactive terminal session.
 - G5 is Day 7. The detailed schedule puts final FP classification/audit and G6
   on Day 9; this task stops after Day 8 and does not award G6 early.
+
+## Day 6
+
+- C-15/X-07: OH2 guard added before path lookup/allocation. ftest passes at
+  CPUS=1/3, including the previously failing mkdir/mknod tests.
+- A-15: T2/T17 pass across real reboots at both CPU counts with matching image
+  paths/checksums and random tokens. Fresh-disk T2 correctly fails as a negative
+  control. No rebuild occurs between either phase.
+- D-12: 60 additional CPUS=3 trials pass. Watermark retained with measured limits
+  and a checked, unmerged per-pipe fallback patch.
+- X-06: denial audit #2 records all seven obligations and assigned review roles;
+  no human signatures have been invented.
+- A integration repair: INT1–INT8 and real Runs A/B/C replace simulated baseline
+  evidence before G5. Run A builds the exact pinned upstream source from the
+  existing local checkout; the project's initial import is not pristine stock.
+
+Commits remain on the existing main branch in ordered member/task blocks, as in
+the user's Day 1–4 history. This single-implementer execution does not fabricate
+four feature-branch histories or peer approvals. Team review remains separate.

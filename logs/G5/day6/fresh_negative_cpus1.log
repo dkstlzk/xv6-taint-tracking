@@ -1,0 +1,45 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       d64c43fdf8338dd6ba5ee424dff8ee5c4c47e6a4
+DATE:         2026-11-02T11:00:10+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      ftest phase1/phase2-t2; reboot (fresh=True, abrupt=False)
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+{
+  "case": "t2",
+  "token": "2b1c07a6f31a471d495b143d",
+  "fresh_control": true,
+  "abrupt": false,
+  "before_boot2": {
+    "disk_path": "/tmp/xv6-bridge-mkq65a2v/fs.img",
+    "sha256": "d7415eea8570482f941f1341e5cfe908a8488bf679b24eac9d080f787cfda694"
+  },
+  "boot2": {
+    "disk_path": "/tmp/xv6-bridge-mkq65a2v/fs.img",
+    "sha256": "5f5608d4c27915bf2fe2fb9b3485627fa6dc5e8483e84bf3e4b669f9a7ead7b8"
+  },
+  "result": "PASS negative control: fresh image fails T2"
+}
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ ftest phase1-t2 2b1c07a6f31a471d495b143d; echo @7fd127e4@
+PASS T2-P1 token created and marked
+SUMMARY pass=1 fail=0 inconclusive=0
+@7fd127e4@
+
+xv6 kernel is booting
+
+init: starting sh
+$ ftest phase2-t2 2b1c07a6f31a471d495b143d; echo @9fec99ae@
+FAIL T2 reboot token matches and read taints fresh process
+SUMMARY pass=0 fail=1 inconclusive=0
+@9fec99ae@
