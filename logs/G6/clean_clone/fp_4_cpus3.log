@@ -1,0 +1,29 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       e4e7c656680dbb98a8b2dcf14fd2fe190a0b2eaf
+DATE:         2026-11-02T23:24:30+05:30
+CPUS:         3
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      FP-4
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+hart 1 starting
+hart 2 starting
+init: starting sh
+$ mark /inbox.txt; echo @b0399fd3@
+@b0399fd3@
+f$ test fp4; echo @453810a6@
+PASS FP-4 tainted creator writes newly untrusted file
+SUMMARY pass=1 fail=0 inconclusive=0
+@453810a6@
+$ cat /new.txt; echo @cbf098f8@
+allowed@cbf098f8@

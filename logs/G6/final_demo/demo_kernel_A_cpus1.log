@@ -1,0 +1,32 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       90eb7061b8fd8452230043f38b04af3f0b45b06f
+DATE:         2026-11-02T23:39:20+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      kernel demo Run A
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+KERNEL_TREE: /tmp/xv6-pinned-day8
+KERNEL_SHA256: f8dee076eccf769c8a2ab58a3b1034d22144edb616effa97c01933c1dd5b415c
+BASELINE_REVISION: f780d7850765d74cbdcd1fff4b822d8829f7c9bd
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ echo protected > /important.txt; echo @aa247d4d@
+@aa247d4d@
+$ echo rm /important.txt > /inbox_cmd.txt; echo @62a60f89@
+@62a60f89@
+$ cat /inbox_cmd.txt | sh; echo @c1b4dae5@
+$ $ @c1b4dae5@
+$ cat /important.txt; echo @85e273f1@
+cat: cannot open /important.txt
+@85e273f1@
+$ 

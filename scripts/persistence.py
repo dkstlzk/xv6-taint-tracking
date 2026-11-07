@@ -14,7 +14,8 @@ def run_case(case, log_dir, cpus=1, fresh=False, abrupt=False):
     evidence = {"case": case, "token": token, "fresh_control": fresh, "abrupt": abrupt}
     error = None
     try:
-        check_suite(bridge.run(f"ftest phase1-{case} {token}")["output"])
+        phase1 = "kill" if abrupt else case
+        check_suite(bridge.run(f"ftest phase1-{phase1} {token}")["output"])
         bridge.stop(abrupt=abrupt)
         evidence["before_boot2"] = {"disk_path": bridge.disk_path,
                                     "sha256": bridge.get_disk_checksum()}

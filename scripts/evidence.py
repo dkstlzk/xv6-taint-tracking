@@ -19,10 +19,10 @@ def header(command, cpus):
     return result + f"SOURCE_DIFF_SHA256: {hashlib.sha256(diff).hexdigest()}\nSOURCE_DIRTY: {bool(diff)}\n"
 
 
-def save(path, command, cpus, transcript, details=""):
+def save(path, command, cpus, transcript, details="", provenance=None):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(header(command, cpus) + details + "\nRAW TRANSCRIPT\n" + transcript)
+    path.write_text((provenance if provenance is not None else header(command, cpus)) + details + "\nRAW TRANSCRIPT\n" + transcript)
 
 
 def check_suite(output):

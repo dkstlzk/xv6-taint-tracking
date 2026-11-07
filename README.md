@@ -2,7 +2,12 @@
 
 **IIT Jodhpur — CSL3030 Operating Systems Lab — Project 3 (Q3)**
 
-This repository contains the complete implementation through **Day 4** of the taint-tracking extension to `xv6-riscv` and the accompanying host-side Agentic Lab test framework.
+This repository implements the taint-tracking extension to `xv6-riscv` and the
+host Agentic Lab through **Day 8**. The `g5-mandatory` tag records the Day 7 gate.
+See [the Day 5–8 record](docs/DAY5_DAY8_PROGRESS.md) and
+[reproduction commands](scripts/README.md) for current evidence and remaining
+Day 9–11 work. Historical Day 1–4 reports are retained; simulated bridge/demo
+results and stale completion claims in those reports are superseded by G5/G6 logs.
 
 ---
 
@@ -16,7 +21,7 @@ The system implements mandatory information-flow security inside the xv6 kernel 
 - **Write-Down Prevention**: Tainted processes are strictly prevented from writing to or truncating clean regular files (enforced in `filewrite` and `sys_open`).
 - **Filesystem Hardening**: Tainted processes cannot unlink or link files (`sys_unlink`, `sys_link`). Newly created files by tainted processes are born untrusted on disk (`create()`).
 - **Execution Containment**: Tainted processes cannot execute binaries outside `/safe` (`kexec`). Executing directories (`/safe`, `/`) or untrusted binaries inside `/safe` is rejected.
-- **Pipe Watermarking**: Inter-process communication pipes track a high watermark (`tainted_hi`, `has_taint`) per-byte to eliminate false negatives when multiple writers share a pipe.
+- **Pipe Watermarking**: Pipes update a high watermark (`tainted_hi`, `has_taint`) after each tainted byte. Logged concurrent campaigns observed no false negatives; conservative false positives and wraparound limits are documented in `logs/pipe_invariant.md`.
 - **Canonical Refusal Logs**: Every kernel refusal emits exactly one canonical log line:
   - `taint: unlink refused for pid %d\n`
   - `taint: link refused for pid %d\n`
@@ -61,7 +66,7 @@ os-project/
 │   ├── DAY1_DAY4_IMPLEMENTATION_AUDIT.md # Initial task-by-task status matrix
 │   └── DAY1_DAY4_FINAL_REPORT.md         # Final comprehensive completion and evidence report
 ├── logs/                    # Audit tables and execution evidence logs
-│   ├── audit.md             # 3 cross-member security audit passes for denial obligations
+│   ├── audit.md             # Audit passes 1 and 2; final pass 3 remains Day 9
 │   ├── issues.md            # Project defect and question tracking register
 │   ├── pipe_invariant.md    # Pipe watermark invariant and safety analysis
 │   ├── G1/                  # Gate G1 baseline build, layout, and hello smoke evidence
@@ -95,14 +100,17 @@ os-project/
 # 1. Action validator unit tests (20 tests)
 python3 -m unittest agent_lab/tests/test_validator.py
 
-# 2. QEMU bridge unit tests (10 tests)
+# 2. Real QEMU bridge tests (build kernel and fs.img first)
+make -j4 kernel/kernel fs.img
 python3 -m unittest agent_lab/tests/test_bridge.py
 
 # 3. Layer-1 Prompt Injection Demo (emits 8-field trace)
-PYTHONPATH=. python3 agent_lab/demo_agent.py
+bash agent_lab/make_lab_image.sh
+python3 -m agent_lab.demo_agent
 
 # 4. Layer-2 Kernel Refusal Demo (Runs A, B, C)
-python3 agent_lab/demo_kernel.py
+# Export/build upstream-pinned first; see scripts/README.md
+python3 -m agent_lab.demo_kernel --baseline-root /tmp/xv6-demo-stock
 ```
 
 ### Guest xv6 Tests (in QEMU):
@@ -111,8 +119,8 @@ make clean && make qemu
 # Inside xv6 shell:
 $ hello     # Verifies sys_hello (sum = 10)
 $ ttest     # Verifies process taint & fork inheritance (5 tests)
-$ ftest     # Verifies filesystem persistence & refusals (9 tests)
-$ ptest     # Verifies pipe watermark & exec containment (8 tests)
+$ ftest     # Filesystem refusals and confirmed inode reuse; reboot phases are separate
+$ ptest     # Pipe watermark, real exec, zero/failed reads and concurrent long writes
 $ atest     # Verifies red-team attack defenses (9 attacks)
 ```
 

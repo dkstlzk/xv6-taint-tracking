@@ -109,8 +109,9 @@ class QemuBridge:
         # sh.c has a 100-byte command buffer, including its trailing NUL.
         # Keep framing to 18 bytes so an 80-byte command plus newline fits.
         sentinel = "@" + secrets.token_hex(4) + "@"
-        # File contents need not end with a newline; exclude the tty command echo.
-        pattern = re.compile(r"(?<!echo )" + re.escape(sentinel) + r"\n")
+        # Drain the following prompt before sending again: on CPUS=3 a late
+        # prompt can split the next command's echo and defeat echo exclusion.
+        pattern = re.compile(r"(?<!echo )" + re.escape(sentinel) + r"\n\$ ")
         self.proc.stdin.write(f"{cmd}; echo {sentinel}\n".encode())
         output = self._read_until(pattern, config.CMD_TIMEOUT_S if timeout is None else timeout)
         lines = output.splitlines()

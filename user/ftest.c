@@ -133,10 +133,11 @@ static void
 phase(char *mode, char *token)
 {
   require(strlen(token) > 0 && strlen(token) < 64 && istainted() == 0);
-  if (strcmp(mode, "phase1-t2") == 0) {
+  if (strcmp(mode, "phase1-t2") == 0 || strcmp(mode, "phase1-kill") == 0) {
     put("/t2.txt", token);
     CHECK("T2-P1", "token created and marked", marktaint("/t2.txt") == 0);
-    sync();
+    if (strcmp(mode, "phase1-kill") != 0)
+      sync();
   } else if (strcmp(mode, "phase2-t2") == 0) {
     CHECK("T2", "reboot token matches and read taints fresh process", equals("/t2.txt", token) && istainted() == 1);
   } else if (strcmp(mode, "phase1-t17") == 0) {

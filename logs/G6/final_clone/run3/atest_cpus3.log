@@ -1,0 +1,46 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       880b60b7d3bdb590a5b057e40c182c93958d2965
+DATE:         2026-11-02T23:28:38+05:30
+CPUS:         3
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      atest
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+BOOTS: [{"disk_path": "/tmp/xv6-bridge-nxry7tjj/fs.img", "sha256": "d8a151b43edbede407e6ed0c56c07684ad26fc10fae716546b6c6b84061c2752"}]
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+hart 2 starting
+hart 1 starting
+init: starting sh
+$ atest; echo @fd2cbe6d@
+taint: unlink refused for pid 5
+PASS A1 pipe propagation and unlink gate preserve victim
+taint: write refused for pid 7
+PASS A2 born-untrusted inode and filewrite gate block laundering
+taint: unlink refused for pid 9
+PASS A3 hard-link alias shares inode taint; unlink gate
+taint: link refused for pid 10
+PASS A4 link gate blocks inserting rm into safe
+taint: unlink refused for pid 11
+PASS A8 raw ecall reaches kernel unlink gate
+taint: unlink refused for pid 13
+taint: write refused for pid 13
+PASS A9 taint survives allowed exec; unlink and open gates hold
+valid-ELF-control
+taint: exec refused for pid 14
+PASS A16 born-untrusted valid ELF refused inside safe
+taint: write refused for pid 17
+PASS A17 create never relabels existing clean inode
+taint: write refused for pid 18
+PASS A18 open gate precedes truncation
+SUMMARY pass=9 fail=0 inconclusive=0
+@fd2cbe6d@
+$ 

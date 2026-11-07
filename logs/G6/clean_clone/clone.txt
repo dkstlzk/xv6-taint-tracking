@@ -1,0 +1,4 @@
+SOURCE: /home/parneeka/Desktop/OS_proj/demo/os-project
+REF: g5-mandatory
+COMMIT: e4e7c656680dbb98a8b2dcf14fd2fe190a0b2eaf
+CLONE: /tmp/xv6-regression-ytxatzkk/source

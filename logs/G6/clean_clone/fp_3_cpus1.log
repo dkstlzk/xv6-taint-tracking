@@ -1,0 +1,27 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       e4e7c656680dbb98a8b2dcf14fd2fe190a0b2eaf
+DATE:         2026-11-02T23:24:21+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      FP-3
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ mark /inbox.txt; echo @b24ed010@
+@b24ed010@
+cat /inbox.txt > /copy.txt; echo @783b6f55@
+$ taint: write refused for pid 6
+cat: write error
+@783b6f55@
+cat /copy.txt; echo @062473bb@
+$ @062473bb@

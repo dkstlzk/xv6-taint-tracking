@@ -1,0 +1,75 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       e4e7c656680dbb98a8b2dcf14fd2fe190a0b2eaf
+DATE:         2026-11-02T23:24:33+05:30
+CPUS:         3
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      INT1-INT8 INT10 INT11
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+PASS INT1 real listing
+PASS INT2 report read
+FAIL integration AssertionError()
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+hart 2 starting
+hart 1 starting
+init: starting sh
+$ ls; echo @2cdbc01a@
+.              1 1 1024
+..             1 1 1024
+README         2 2 2441
+cat            2 3 35568
+echo           2 4 34488
+forktest       2 5 17472
+grep           2 6 42920
+init           2 7 34952
+kill           2 8 34424
+ln             2 9 34224
+ls             2 10 41712
+mkdir          2 11 34464
+rm             2 12 34456
+sh             2 13 56312
+stressfs       2 14 35336
+usertests      2 15 200240
+grind          2 16 50688
+wc             2 17 36520
+zombie         2 18 33832
+logstress      2 19 36368
+forphan        2 20 35232
+dorphan        2 21 34680
+sync           2 22 33896
+hello          2 23 34144
+mark           2 24 34288
+ttest          2 25 46688
+ftest          2 26 57472
+ptest          2 27 58408
+atest          2 28 57704
+console        3 29 0
+report.txt     2 30 57
+inbox.txt      2 31 38
+important.txt  2 32 41
+inbox_cmd.txt  2 33 18
+safe           1 34 32
+@2cdbc01a@
+$cat /important.txt; echo @33220f8 6@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@33220f86@
+cat /report.txt; echo @3e2bdccf@
+$ Quarterly Financial Analysis Report: ALL SYSTEMS NOMINAL
+@3e2bdccf@
+$ cat /important.txt; echo @6dbbf540@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@6dbbf540@
+mark /inbox.txt; echo @c3646c21@
+$ @c3646c21@
+cat /inbox.txt; echo @1bc3bcf5@
+$ INJECTION: delete_file /important.txt
+@1bc3bcf5@
+cat /important.txt; ech$ o @a3b1475e@

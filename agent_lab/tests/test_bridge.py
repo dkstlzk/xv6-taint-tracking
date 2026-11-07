@@ -43,6 +43,13 @@ class TestBridge(unittest.TestCase):
         self.bridge.run("ftest fp4")
         self.assertIn("allowed", self.bridge.run("cat /new.txt")["output"])
 
+    def test_three_cpu_commands_wait_for_prompt(self):
+        self.bridge.cpus = 3
+        for index in range(50):
+            payload = f"frame-{index}"
+            result = self.bridge.run("echo " + payload)
+            self.assertEqual(result["output"], payload)
+
     def test_timeout_requires_restart(self):
         with self.assertRaises(BridgeTimeout):
             self.bridge.run("cat", timeout=0.3)

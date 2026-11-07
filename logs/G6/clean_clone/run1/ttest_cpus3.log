@@ -1,0 +1,32 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       e4e7c656680dbb98a8b2dcf14fd2fe190a0b2eaf
+DATE:         2026-11-02T23:23:08+05:30
+CPUS:         3
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      ttest
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+BOOTS: [{"disk_path": "/tmp/xv6-bridge-lud58sz5/fs.img", "sha256": "5f5608d4c27915bf2fe2fb9b3485627fa6dc5e8483e84bf3e4b669f9a7ead7b8"}]
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+hart 1 starting
+hart 2 starting
+init: starting sh
+$ ttest; echo @b8bcfb3e@
+hello 1 2 3 4
+PASS T0 hello syscall returns correct sum
+PASS T1 fresh process starts clean
+PASS T4 child inherits parent taint across fork
+PASS T3 positive-byte read taints while zero-byte read does not
+taint: write refused for pid 10
+PASS T11a write via FD opened while clean is refused after process becomes tainted
+SUMMARY pass=5 fail=0 inconclusive=0
+@b8bcfb3e@
