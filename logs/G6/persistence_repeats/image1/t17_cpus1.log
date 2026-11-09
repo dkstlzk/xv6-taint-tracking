@@ -1,0 +1,79 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       fd1831dca5b23000c5c317e363f4e23649b77de9
+DATE:         2026-11-03T18:04:03+0530
+CPUS:         1
+GCC_VERSION:  riscv64-elf-gcc (GCC) 16.2.0
+QEMU_VERSION: QEMU emulator version 11.1.1
+COMMAND:      ftest phase1/phase2-t17; reboot (fresh=False, abrupt=False)
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+{
+  "case": "t17",
+  "token": "8de2de8beb61ec5eb4886c2f",
+  "fresh_control": false,
+  "abrupt": false,
+  "before_boot2": {
+    "disk_path": "/var/folders/g2/mcrtjwp54xx59jl__qn2gt500000gn/T/xv6-bridge-fqfd2upq/fs.img",
+    "sha256": "8c605b379377bd5e6a8b0622ac465f33d8be5f9cc308f6c31f6688d4cfeed1b2"
+  },
+  "boot2": {
+    "disk_path": "/var/folders/g2/mcrtjwp54xx59jl__qn2gt500000gn/T/xv6-bridge-fqfd2upq/fs.img",
+    "sha256": "8c605b379377bd5e6a8b0622ac465f33d8be5f9cc308f6c31f6688d4cfeed1b2"
+  },
+  "result": "PASS T17"
+}
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ ftest phase1-t17 8de2de8beb61ec5eb4886c2f; echo @54a12eaa@
+PASS T17-P1 marked file deleted before reboot
+SUMMARY pass=1 fail=0 inconclusive=0
+@54a12eaa@
+$ 
+xv6 kernel is booting
+
+init: starting sh
+$ ls /; echo @7de69744@
+.              1 1 1024
+..             1 1 1024
+README         2 2 2441
+cat            2 3 37496
+echo           2 4 36304
+forktest       2 5 18040
+grep           2 6 41016
+init           2 7 36656
+kill           2 8 36216
+ln             2 9 36008
+ls             2 10 39552
+mkdir          2 11 36264
+rm             2 12 36256
+sh             2 13 59824
+stressfs       2 14 37096
+usertests      2 15 204488
+grind          2 16 52128
+wc             2 17 38488
+zombie         2 18 35560
+logstress      2 19 38256
+forphan        2 20 37008
+dorphan        2 21 36472
+sync           2 22 35648
+hello          2 23 35896
+mark           2 24 36056
+ttest          2 25 48976
+ftest          2 26 55800
+ptest          2 27 56208
+atest          2 28 56064
+console        3 29 0
+t17proof       2 30 24
+@7de69744@
+$ ftest phase2-t17 8de2de8beb61ec5eb4886c2f; echo @59c9bd5e@
+PASS T17 same-image lifecycle and clean recreation (no reuse claim)
+SUMMARY pass=1 fail=0 inconclusive=0
+@59c9bd5e@
+$ 
