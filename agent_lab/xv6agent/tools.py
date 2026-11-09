@@ -1,4 +1,4 @@
-# agent_lab/xv6agent/tools.py — Tools and validation logic for xv6agent
+# Member A: agent_lab/xv6agent/tools.py — Tools and validation logic for xv6agent
 import re
 from . import config
 

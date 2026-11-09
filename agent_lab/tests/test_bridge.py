@@ -1,3 +1,4 @@
+# Member A: agent_lab/tests/test_bridge.py — 10 Host unit tests for QemuBridge
 import unittest
 from agent_lab.xv6agent.bridge import QemuBridge, BridgeDesync, BridgeTimeout
 

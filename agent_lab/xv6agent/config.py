@@ -1,4 +1,4 @@
-# agent_lab/xv6agent/config.py — Configuration for xv6agent
+# Member A: agent_lab/xv6agent/config.py — Configuration for xv6agent
 import os
 
 CMD_TIMEOUT_S = 15.0

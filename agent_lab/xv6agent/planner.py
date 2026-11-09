@@ -1,4 +1,4 @@
-# agent_lab/xv6agent/planner.py — Deterministic and simulated gullible planners
+# Member A: agent_lab/xv6agent/planner.py — Deterministic and simulated gullible planners
 import re
 
 class DeterministicPlanner:

@@ -62,6 +62,18 @@ Commits remain on the existing main branch in ordered member/task blocks, as in
 the user's Day 1–4 history. This single-implementer execution does not fabricate
 four feature-branch histories or peer approvals. Team review remains separate.
 
+## Day 7 — X-08 / G5
+
+`python3 -m scripts.check_g5` validates a fresh campaign at `f4cdb8b`:
+eight guest suite runs (CPUS=1/3), 34 host tests, seven mandatory plus two optional
+attacks, exact policy-refusal counts, confirmed inode reuse, T2/T17 at both CPU
+counts with fresh-image negative controls, 60 further stress trials, all five FP
+controls, INT1–INT8, and measured Runs A/B/C. Audit #2 and the Day 6 pipe decision
+are present. No implementation P0 remains open. `logs/G5/day7/gate_g5.json`
+records the tested commit and SHA-256 of every checked artifact. The annotated
+`g5-mandatory` tag points to the evidence commit; its implementation is identical
+to the tested commit. Human contribution reviews/signatures are not asserted.
+
 ## Day 8
 
 - A-18/B-12 (assigned to A): a fresh clone at g5-mandatory passes three clean

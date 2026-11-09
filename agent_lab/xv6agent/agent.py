@@ -1,4 +1,4 @@
-# agent_lab/xv6agent/agent.py — Agent loop with frozen 8-field trace
+# Member A: agent_lab/xv6agent/agent.py — Agent loop with frozen 8-field trace
 import json
 import os
 from .tools import validate_action, ValidationError

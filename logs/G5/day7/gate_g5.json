@@ -1,0 +1,133 @@
+{
+  "gate": "G5",
+  "result": "PASS",
+  "tested_commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96",
+  "human_peer_signatures": "not asserted",
+  "evidence": [
+    {
+      "path": "logs/G5/day7/ttest_cpus1.log",
+      "sha256": "1db88b75b414feda8e7eb7e0f15381e6dcb89a95708ba250620b98d94d52ce27",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/ftest_cpus1.log",
+      "sha256": "05f1eedf6e411ecc443854e7ed998a56562d15c4397e7233765a902dc935f2a9",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/ptest_cpus1.log",
+      "sha256": "8778facd4629ce957b0236b8ddb158e0b0a9c1b060e092e4491c4b903b5fad52",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/atest_cpus1.log",
+      "sha256": "03ec60933cad95888713d0684e0318433af6e163e43fbcdc0c5929bb36eaa9d8",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/t2_cpus1.log",
+      "sha256": "0052d227f09e27370be1334a2c27c8be2b7fb9e3f09021bc75c99877a5ea95a9",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/t17_cpus1.log",
+      "sha256": "819db3b42570e96cd8a332a2331a68bfbaf6d0d3911204f96dec305dedb49a0d",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/fresh_negative_cpus1.log",
+      "sha256": "31930696cc4363919dd3fcf4d4548cff00b0de71b1bfd7bdedea3f7c3833b80f",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/ttest_cpus3.log",
+      "sha256": "92d313e961859fd46e79743eeadbb5edf5aa215e281e60258e9d88eef3450f8a",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/ftest_cpus3.log",
+      "sha256": "4715a7ea90ddc7709444e189e89a1dfdef27873ea6a5e8b19038c399511f8e34",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/ptest_cpus3.log",
+      "sha256": "29a057efbcfa1b73563285aa17705fa3455dc1b2e6561c4d42f83c23273c45eb",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/atest_cpus3.log",
+      "sha256": "a08f778260c60a59678d5ae4301123fc63b04d10a99c524b3a5f4968c7e1deee",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/t2_cpus3.log",
+      "sha256": "db55c01b8d26a74735278b3187e87abde02071aed18ebc939a3f84ad6eb226f2",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/t17_cpus3.log",
+      "sha256": "fc349f8c56159ebfa1891f0f085e3a6d38106362321b68da211846af0435d86b",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/fresh_negative_cpus3.log",
+      "sha256": "42058a6c8fb236f844929f77e3a6ca2a3b1b765194201c878fdf044d5ca76ff8",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/stress60_cpus3.log",
+      "sha256": "5d59d37ebe3804a20268e934135bd354f7bad7a21d2277ccaa6e258339a9b165",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/host_tests.log",
+      "sha256": "8995ec575b619507ad676df562b3eed3599500bd2ddb71ea76cd3fae7d4f8799",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/fp_1_cpus1.log",
+      "sha256": "cd500d5f39b1459bc1acf16d1767dc916c952b58572ae2a2a9ec61f5f530eea3",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/fp_2_cpus1.log",
+      "sha256": "df34397516030eedb12b99615557ba65740c7d2438b0cac69e4f564b70b2bc7d",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/fp_3_cpus1.log",
+      "sha256": "baf4d64b0146c823cff2742cc7d63a582f18342972f9f55dd8388fea3a4ff20a",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/fp_4_cpus1.log",
+      "sha256": "7c2e88bea1ba7b6e53c409bc30a3af300d9365f301b971334660fea3b3cefc51",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/fp_5_cpus1.log",
+      "sha256": "cd092a2080d0191480eb793ab772ec9c99537cb2979c4ebe29b75f20f6499430",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/integration_cpus1.log",
+      "sha256": "e8d7b25a2688b54dfa436279e0347a0e4e86cb33465efac75046f271620debf0",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/demo_kernel_A_cpus1.log",
+      "sha256": "1f13f6bf395bee5a6f6a275577b870d2fb5f0c8e9fed82b870092e38213c34eb",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/demo_kernel_B_cpus1.log",
+      "sha256": "b5cd6047ad9b50eb50ee3238ff8a079d5679143bffbdde652bc1437894323af5",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    },
+    {
+      "path": "logs/G5/day7/demo_kernel_C_cpus1.log",
+      "sha256": "feba01f39ec7c50065767da9c534632ccc43fd0fc6cc31118ebf43c4aefdcb3c",
+      "commit": "f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96"
+    }
+  ]
+}

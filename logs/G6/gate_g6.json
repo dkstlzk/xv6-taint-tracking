@@ -1,0 +1,252 @@
+{
+  "gate": "G6",
+  "result": "PASS",
+  "status": "All clean-clone runs, stock usertests, stress campaigns, FP classification, persistence repeats, and final audit pass #3 validated",
+  "evidence_count": 61,
+  "evidence": [
+    {
+      "path": "logs/G6/final_clone/run1/ttest_cpus1.log",
+      "sha256": "816b3de522246fb42674c14908f893ca99b46470d115ecc98f3301445094f81d"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/ftest_cpus1.log",
+      "sha256": "b9fdf0d6f3dffb2dd90adcd63ad654f82f45f6d838478b1e9e4510fb69a404c8"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/ptest_cpus1.log",
+      "sha256": "1fff3c558fa005c2683a3e6b63eb882b6ec715fade81456cdd78aa9ba1f3a41c"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/atest_cpus1.log",
+      "sha256": "54fb8103c78dab95266b6505acf02b82130d17c9056eb687b0a7b5be4781aed6"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/host_tests.log",
+      "sha256": "c8248aa25b51ce7ba92e839571b30d2080b48707bbdfe8e2c0e817f235dcdf64"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/ttest_cpus3.log",
+      "sha256": "766029c1eecc53acf17b5703ef366444ebab64b9be6c84d41d2cad1bd45388b5"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/ftest_cpus3.log",
+      "sha256": "747e10fd0b72bb0fbea3005a914281757c763ac1a2ac94754f67853e7616c4ca"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/ptest_cpus3.log",
+      "sha256": "59e4506293d9462d37b50a689c52c0f552ce67501a5f644e36f28cf96a899d2e"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/atest_cpus3.log",
+      "sha256": "b320fcc0000db4ac26987124894a0a2a4e1df2c9d83efd0662d16d75df38ea72"
+    },
+    {
+      "path": "logs/G6/final_clone/run1/host_tests.log",
+      "sha256": "c8248aa25b51ce7ba92e839571b30d2080b48707bbdfe8e2c0e817f235dcdf64"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/ttest_cpus1.log",
+      "sha256": "74556d3012f626e80019ed33f1ae2459942b4ae46366f31cf9695c6a0b21b1f8"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/ftest_cpus1.log",
+      "sha256": "fdc4fcbec3449ac2b5fd0d554e7f3d693a2cac9fb39a271d6bf6822350ac7cef"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/ptest_cpus1.log",
+      "sha256": "922d94c5e04c1690d3cadeabe76f92fa06d703e043717f87233987253e6827f0"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/atest_cpus1.log",
+      "sha256": "8c9f1c89f271d2625e99bc7f3842096545692e78bcb693be7533c23b87b3fd20"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/host_tests.log",
+      "sha256": "950aa7aba7b720f276b00d1f1ea2c7f1d3d2914dc03f2b6ecbbaaac4114b4497"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/ttest_cpus3.log",
+      "sha256": "4a233731d937862c9bab65344ad0b4bc6bc802f7ceb4e9a757763e6ba075e5d4"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/ftest_cpus3.log",
+      "sha256": "b4dfca792d72be389621ebdad65aa8148c568cab35df1ef11928bb502b519075"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/ptest_cpus3.log",
+      "sha256": "e937ca987f3fae34646db82de25b14d6b3dc868096fdbe59c504662f1ab28b8a"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/atest_cpus3.log",
+      "sha256": "adb95bca797d5c14b709a36148668e571d8b05a6a212a04fb309d38b7e7baebf"
+    },
+    {
+      "path": "logs/G6/final_clone/run2/host_tests.log",
+      "sha256": "950aa7aba7b720f276b00d1f1ea2c7f1d3d2914dc03f2b6ecbbaaac4114b4497"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/ttest_cpus1.log",
+      "sha256": "2fb6765b21493fd04689c37eebd11e914596f2b131aabb03188a1c188730b566"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/ftest_cpus1.log",
+      "sha256": "461b27125e934493fcd89d5fff854f517c0655c38579de4f649e0c1036a69cc5"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/ptest_cpus1.log",
+      "sha256": "af85d5a6c8acb7e2ecc4a2a1471e999c9c88ef3b3896c695c45f334824e850cf"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/atest_cpus1.log",
+      "sha256": "53e77ddefae7612aba8ae63267938014fdde5a69a94a650bf52308e34cdfd49e"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/host_tests.log",
+      "sha256": "b7148dafb6dc6107f1ae38cbecea4cd35e681d27d60a0f2c3d8d1aee11c8db9e"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/ttest_cpus3.log",
+      "sha256": "232632e74960d512ceca60a93622c09c35f17481a79fdd8684c9f8fea966e221"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/ftest_cpus3.log",
+      "sha256": "d4ac2decbecf0bd6985d6fb94aa10b8424923cdf12e8dcc84769f0ac26844977"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/ptest_cpus3.log",
+      "sha256": "8b1bedd5a2e7bf4fbf525fb54bd8b12216f1ad08cea8a9140e9e29c4ac791db6"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/atest_cpus3.log",
+      "sha256": "6b192c74451877544b87f4cec99981dc2bb9ee55e6a1afc27e49c757796d256b"
+    },
+    {
+      "path": "logs/G6/final_clone/run3/host_tests.log",
+      "sha256": "b7148dafb6dc6107f1ae38cbecea4cd35e681d27d60a0f2c3d8d1aee11c8db9e"
+    },
+    {
+      "path": "logs/G6/usertests_cpus1.log",
+      "sha256": "97b77988736fcf3ed704ac265459f3b96ee8265737cb02f072244dcf09e53ede"
+    },
+    {
+      "path": "logs/G6/usertests_cpus3.log",
+      "sha256": "3605bf98541a18d8857c2fe173b71dc86dc4cd7800104ed79821bf96a57db7fb"
+    },
+    {
+      "path": "logs/G6/stress_idle_cpus3.log",
+      "sha256": "c52f842344d152d6986289c87aaa0faafa8f7d9501d9358937420e89c257738e"
+    },
+    {
+      "path": "logs/G6/stress_load_cpus3.log",
+      "sha256": "aeee694bf63b12215ec86468499e0f37950f49a6a1b5fa69ca84f86f84719b1c"
+    },
+    {
+      "path": "logs/G6/stress_final_cpus3.log",
+      "sha256": "44fc6da0b063ab438337c6169512befa09dd0a17dfddd75cff6d5b036f365d9e"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_1_cpus1.log",
+      "sha256": "8553edc00064482526dc6bbf2f4d87dd7a2fc525ff42e34d3be3ec08a22f879b"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_2_cpus1.log",
+      "sha256": "a1d0642034a344094d792f609a3efe28f0ed1a4dbb9bee2163b153142fd25c94"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_3_cpus1.log",
+      "sha256": "b80e438d7b12d4809ed3d6442eece9b62869bbba04cff5e48af1c64668d70bea"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_4_cpus1.log",
+      "sha256": "e96c6d0e150a499a27cb1b78c7959b7ec4f9e6e2480868de3b38c91d978b242a"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_5_cpus1.log",
+      "sha256": "4a4b355e15056dac40ea8091d375d4e45374f96dcea39eb3e6e5313ac3379430"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_1_cpus3.log",
+      "sha256": "5bf0c7503dca3d5bc4825a9be1a6453034f70a19f6062c26da500042565368d5"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_2_cpus3.log",
+      "sha256": "d755de256706661c56cbe1161a5a0399dc6ae6cca75fd84cceb9bd4588bec34d"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_3_cpus3.log",
+      "sha256": "b528226e390875fa9f13fb342d102ba5e4d0c05d9ebe1dca97001f1b2b3d790c"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_4_cpus3.log",
+      "sha256": "b515ca312c45de18d3188030043efc970e47f6bf7e673f823d724a4d6a993d33"
+    },
+    {
+      "path": "logs/G6/final_clone/fp_5_cpus3.log",
+      "sha256": "f7558dde21c9617ee7479a5bf71b1452a4b9c86e6c4d38580168dcce487c7ff9"
+    },
+    {
+      "path": "logs/G6/fp_classification.md",
+      "sha256": "0ddf5516e9c241865722c129eef3739fd011272d3038054635a13a6dbe9a32d5"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image1/t2_cpus1.log",
+      "sha256": "c8886ae548b5a9e42abff4914bca0b6055752484477f820eabcbd3667ef14bb1"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image1/t17_cpus1.log",
+      "sha256": "397a568bc4303b3523970dc1d17a35186036a6b76e6f53099439ac1d2f89df4b"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image1/fresh_negative_cpus1.log",
+      "sha256": "f343dc16293afd9b471dec55d9edc7013d4b965bf6a3cfffc5db36867beb4773"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image1/ftest_cpus1.log",
+      "sha256": "39e5b779303587c5a08648c500906efd7925e4174aacab2101e595d316520572"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image2/t2_cpus1.log",
+      "sha256": "5929b12cf3c8324c7e72eabce2f08126403a5ccb428b7b33681119ee2316e7b5"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image2/t17_cpus1.log",
+      "sha256": "1183b1cbd0e8479663f610f12f9d035506ca6911f58859c8a6af4c3a009c2a77"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image2/fresh_negative_cpus1.log",
+      "sha256": "f82668624911c76d893c086731c965d00db47cd4055e639f410f70f3ea96bc25"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image2/ftest_cpus1.log",
+      "sha256": "1344624c9f58f05be0a8004277879cda2b200f15984717ec995593550eae4aee"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image3/t2_cpus1.log",
+      "sha256": "a6ca7d743c1af2f28e32be49419a5f5236bcbf5c0c3749549029cf89366abc57"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image3/t17_cpus1.log",
+      "sha256": "18f8982e243821f752c68c0f41cf20eb76ee14ebf025f39192d58dd511455c17"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image3/fresh_negative_cpus1.log",
+      "sha256": "ee0f1f3abd9d137ddac7b063667723cfea6f4f899b84ab20a30040fe9dd77cb3"
+    },
+    {
+      "path": "logs/G6/persistence_repeats/image3/ftest_cpus1.log",
+      "sha256": "717ccd175df0219c7f24d598229c8adb60d3917ab4fcdba52a18b5148287856b"
+    },
+    {
+      "path": "/Users/vidhisharma/Desktop/os-repo/os-project/os-project/logs/audit.md",
+      "sha256": "1aaad7ace9830b35118c9872557f24dd0e9cef2d386e879966a9f89d80d68855"
+    },
+    {
+      "path": "logs/G6/final_clone/integration_cpus1.log",
+      "sha256": "542431f848927ae434576472a7ca5d01bbe3195b999b0f6d57e9f6a1b30ebca1"
+    },
+    {
+      "path": "logs/G6/final_clone/integration_cpus3.log",
+      "sha256": "c84a6700b7240a795115aae3e42272eb1073a44b02af065fb6480bbf97f61de0"
+    }
+  ]
+}
