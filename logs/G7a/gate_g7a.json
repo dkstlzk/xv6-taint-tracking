@@ -1,0 +1,19 @@
+{
+  "gate": "G7a",
+  "result": "PASS",
+  "status": "Requirement audit index, technical report, attribution records, individual packages, and viva drills validated",
+  "artifacts": [
+    "logs/INDEX.md",
+    "docs/REPORT.md",
+    "LIMITS.md",
+    "CONTRIBUTIONS.md",
+    "submissions/attribution_report.json",
+    "submissions/member_A.zip",
+    "submissions/member_B.zip",
+    "submissions/member_C.zip",
+    "submissions/member_D.zip",
+    "submissions/mock_viva_drills.md",
+    "submissions/checklists.md"
+  ]
+}
+

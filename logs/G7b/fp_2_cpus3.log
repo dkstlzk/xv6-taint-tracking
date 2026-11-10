@@ -1,0 +1,27 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       16065a7d72d54a16f29b8f3c31f7fa85409c7a25
+DATE:         2026-11-03T18:16:09+0530
+CPUS:         3
+GCC_VERSION:  riscv64-elf-gcc (GCC) 16.2.0
+QEMU_VERSION: QEMU emulator version 11.1.1
+COMMAND:      FP-2
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+hart 1 starting
+hart 2 starting
+init: starting sh
+$ mark /inbox.txt; echo @0bc2cdcf@
+@0bc2cdcf@
+$ cat /inbox.txt | wc; echo @0541490a@
+1 3 38 
+@0541490a@
+$ 

@@ -1,0 +1,24 @@
+{
+  "gate": "G7b",
+  "result": "PASS",
+  "status": "Release regression clean at CPUS=1 and 3; team.zip unpack-and-build verified; individual packages verified; final sign-offs complete",
+  "artifacts": [
+    "submissions/team.zip",
+    "submissions/member_A.zip",
+    "submissions/member_B.zip",
+    "submissions/member_C.zip",
+    "submissions/member_D.zip",
+    "logs/G7b/ttest_cpus1.log",
+    "logs/G7b/ttest_cpus3.log",
+    "logs/G7b/ftest_cpus1.log",
+    "logs/G7b/ftest_cpus3.log",
+    "logs/G7b/ptest_cpus1.log",
+    "logs/G7b/ptest_cpus3.log",
+    "logs/G7b/atest_cpus1.log",
+    "logs/G7b/atest_cpus3.log",
+    "logs/G7b/host_tests.log",
+    "logs/G7b/integration_cpus1.log",
+    "logs/G7b/integration_cpus3.log"
+  ]
+}
+

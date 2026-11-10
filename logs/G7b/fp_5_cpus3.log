@@ -1,0 +1,38 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       16065a7d72d54a16f29b8f3c31f7fa85409c7a25
+DATE:         2026-11-03T18:16:10+0530
+CPUS:         3
+GCC_VERSION:  riscv64-elf-gcc (GCC) 16.2.0
+QEMU_VERSION: QEMU emulator version 11.1.1
+COMMAND:      FP-5
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+hart 1 starting
+hart 2 starting
+init: starting sh
+$ mark /inbox.txt; echo @965e15ac@
+@965e15ac@
+$ echo ls > /fp5ls; echo @a43f3e8a@
+@a43f3e8a@
+$ echo rm /important.txt > /fp5rm; echo @e8964f6e@
+@e8964f6e@
+$ cat /inbox.txt /fp5ls /fp5rm | sh; echo @23faabac@
+$ exec INJECTION: failed
+$ taint: exec refused for pid 14
+exec ls failed
+$ taint: exec refused for pid 15
+exec rm failed
+$ @23faabac@
+$ cat /important.txt; echo @11ec9248@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@11ec9248@
+$ 
