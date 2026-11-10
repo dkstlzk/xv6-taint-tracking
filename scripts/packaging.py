@@ -27,17 +27,31 @@ def changed(commit):
     return set(git("diff", "--name-only", "-z", BASELINE, commit, "--").decode().split("\0")) - {""}
 
 
+_ATTR_CACHE = {}
+
+
 def attribution(commit):
+    if commit in _ATTR_CACHE:
+        return _ATTR_CACHE[commit]
     owners = {member: {} for member in "ABCD"}
-    for line in git("log", "--format=%H\t%s", commit, "--").decode().splitlines():
-        sha, subject = line.split("\t", 1)
-        match = re.search(r"\[Member ([ABCD])\]", subject)
-        if not match:
+    raw = git("log", "--format=COMMIT:%H%x09%s", "--name-only", "-z", commit, "--").decode()
+    current_member = None
+    current_sha = None
+    current_subject = None
+    for token in raw.split("\0"):
+        token = token.strip("\n")
+        if not token:
             continue
-        member = match.group(1)
-        paths = git("diff-tree", "--no-commit-id", "--name-only", "-r", "-z", sha).decode().split("\0")
-        for path in filter(None, paths):
-            owners[member].setdefault(path, []).append({"commit": sha, "subject": subject})
+        if token.startswith("COMMIT:"):
+            line = token[len("COMMIT:"):]
+            parts = line.split("\t", 1)
+            current_sha = parts[0]
+            current_subject = parts[1] if len(parts) > 1 else ""
+            match = re.search(r"\[Member ([ABCD])\]", current_subject)
+            current_member = match.group(1) if match else None
+        elif current_member:
+            owners[current_member].setdefault(token, []).append({"commit": current_sha, "subject": current_subject})
+    _ATTR_CACHE[commit] = owners
     return owners
 
 
@@ -74,11 +88,11 @@ def pack(member, ref, output, team=False):
     return output
 
 
-def verify(path, ref):
-    commit = revision(ref)
+def verify(path, ref=None):
     with zipfile.ZipFile(path) as archive:
         assert archive.testzip() is None, "corrupt ZIP"
         manifest = json.loads(archive.read("manifest.json"))
+        commit = revision(ref) if ref else manifest["commit"]
         assert manifest["commit"] == commit and manifest["baseline"] == BASELINE
         expected = changed(commit)
         if manifest["member"] != "team":
@@ -104,7 +118,7 @@ def main():
     pack_parser.add_argument("--output-dir", default="artifacts/packages")
     verify_parser = sub.add_parser("verify")
     verify_parser.add_argument("path")
-    verify_parser.add_argument("ref")
+    verify_parser.add_argument("ref", nargs="?", default=None)
     report_parser = sub.add_parser("attribution")
     report_parser.add_argument("ref")
     args = parser.parse_args()

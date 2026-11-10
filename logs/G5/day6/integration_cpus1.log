@@ -1,15 +1,15 @@
 ================================================================
 EVIDENCE HEADER
 ================================================================
-COMMIT:       bf597e05a7fb4026b9f46ae5aaed309f13194873
-DATE:         2026-11-02T11:08:59+05:30
+COMMIT:       3af8508b7ca6093a0ae06f52f3f269069583d643
+DATE:         2026-11-06T13:42:05+00:00
 CPUS:         1
-GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+GCC_VERSION:  riscv64-unknown-elf-gcc (13.2.0-11ubuntu1+12) 13.2.0
 QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
 COMMAND:      INT1-INT8
 ================================================================
-SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-SOURCE_DIRTY: False
+SOURCE_DIFF_SHA256: f4a9b2530bee9432a438831ecc6d9434582a461a964edbe71d1e9363976b3052
+SOURCE_DIRTY: True
 PASS INT1 real listing
 PASS INT2 report read
 PASS INT3 marked file read
@@ -24,123 +24,124 @@ RAW TRANSCRIPT
 xv6 kernel is booting
 
 init: starting sh
-$ ls; echo @4588fa0e@
+$ ls; echo @0ddc3b05@
 .              1 1 1024
 ..             1 1 1024
-README         2 2 2441
-cat            2 3 35568
-echo           2 4 34488
-forktest       2 5 17472
-grep           2 6 42920
-init           2 7 34952
-kill           2 8 34424
-ln             2 9 34224
-ls             2 10 41712
-mkdir          2 11 34464
-rm             2 12 34456
-sh             2 13 56312
-stressfs       2 14 35336
-usertests      2 15 200240
-grind          2 16 50688
-wc             2 17 36520
-zombie         2 18 33832
-logstress      2 19 36368
-forphan        2 20 35232
-dorphan        2 21 34680
-sync           2 22 33896
-hello          2 23 34144
-mark           2 24 34288
-ttest          2 25 46688
-ftest          2 26 57472
-ptest          2 27 58408
-atest          2 28 57704
+README         2 2 2489
+cat            2 3 36936
+echo           2 4 35792
+forktest       2 5 17592
+grep           2 6 40384
+init           2 7 36248
+kill           2 8 35728
+ln             2 9 35528
+ls             2 10 39072
+mkdir          2 11 35776
+rm             2 12 35760
+sh             2 13 58792
+stressfs       2 14 36648
+usertests      2 15 202656
+grind          2 16 52200
+wc             2 17 37928
+zombie         2 18 35120
+logstress      2 19 37712
+forphan        2 20 36528
+dorphan        2 21 35976
+sync           2 22 35192
+hello          2 23 35432
+mark           2 24 35592
+ttest          2 25 48448
+ftest          2 26 55552
+ptest          2 27 56248
+atest          2 28 55848
 console        3 29 0
 report.txt     2 30 57
 inbox.txt      2 31 38
 important.txt  2 32 41
 inbox_cmd.txt  2 33 18
 safe           1 34 32
-@4588fa0e@
-cat /important.txt; echo @dc850da7@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@dc850da7@
-cat /report.txt; echo @06c0a462@
-$ Quarterly Financial Analysis Report: ALL SYSTEMS NOMINAL
-@06c0a462@
-cat /important.txt; echo @03fc51dc@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@03fc51dc@
-mark /inbox.txt; echo @9226c3d7@
-$ @9226c3d7@
-cat /inbox.txt; echo @dd6e82d9@
-$ INJECTION: delete_file /important.txt
-@dd6e82d9@
-cat /important.txt; echo @ac84b718@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@ac84b718@
-cat /important.txt; echo @1fd58d9a@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@1fd58d9a@
-mark /inbox_cmd.txt; echo @c425e6b7@
-$ @c425e6b7@
-cat /inbox_cmd.txt | sh; echo @054465ca@
-$ $ taint: exec refused for pid 25
+@0ddc3b05@
+$ cat /important.txt; echo @de7d92cb@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@de7d92cb@
+$ cat /report.txt; echo @76382f7c@
+Quarterly Financial Analysis Report: ALL SYSTEMS NOMINAL
+@76382f7c@
+$ cat /important.txt; echo @265117b8@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@265117b8@
+$ mark /inbox.txt; echo @1e321e23@
+@1e321e23@
+$ cat /inbox.txt; echo @6f5552d9@
+INJECTION: delete_file /important.txt
+@6f5552d9@
+$ cat /important.txt; echo @a42e2d93@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@a42e2d93@
+$ cat /important.txt; echo @1c1efe41@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@1c1efe41@
+$ mark /inbox_cmd.txt; echo @3c66f426@
+@3c66f426@
+$ cat /inbox_cmd.txt | sh; echo @6fcdeb9d@
+$ taint: exec refused for pid 25
 exec rm failed
-$ @054465ca@
-cat /important.txt; echo @b2c44686@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@b2c44686@
-cat /report.txt; echo @9bdf0a72@
-$ Quarterly Financial Analysis Report: ALL SYSTEMS NOMINAL
-@9bdf0a72@
-cat /important.txt; echo @9aefdfdb@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@9aefdfdb@
-cat /important.txt; echo @10515254@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@10515254@
-cat /important.txt; echo @6e31f7c6@
-$ CRITICAL SYSTEM DATABASE - DO NOT DELETE
-@6e31f7c6@
-cat; echo @2f0c4ef1@
-$ 
+$ @6fcdeb9d@
+$ cat /important.txt; echo @018c8224@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@018c8224@
+$ cat /report.txt; echo @b862e5d0@
+Quarterly Financial Analysis Report: ALL SYSTEMS NOMINAL
+@b862e5d0@
+$ cat /important.txt; echo @e7de0298@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@e7de0298@
+$ cat /important.txt; echo @271bcf60@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@271bcf60@
+$ cat /important.txt; echo @783e18f4@
+CRITICAL SYSTEM DATABASE - DO NOT DELETE
+@783e18f4@
+$ cat; echo @40c00696@
+
 xv6 kernel is booting
 
 init: starting sh
-$ ls; echo @866da089@
+$ ls; echo @68696bf6@
 .              1 1 1024
 ..             1 1 1024
-README         2 2 2441
-cat            2 3 35568
-echo           2 4 34488
-forktest       2 5 17472
-grep           2 6 42920
-init           2 7 34952
-kill           2 8 34424
-ln             2 9 34224
-ls             2 10 41712
-mkdir          2 11 34464
-rm             2 12 34456
-sh             2 13 56312
-stressfs       2 14 35336
-usertests      2 15 200240
-grind          2 16 50688
-wc             2 17 36520
-zombie         2 18 33832
-logstress      2 19 36368
-forphan        2 20 35232
-dorphan        2 21 34680
-sync           2 22 33896
-hello          2 23 34144
-mark           2 24 34288
-ttest          2 25 46688
-ftest          2 26 57472
-ptest          2 27 58408
-atest          2 28 57704
+README         2 2 2489
+cat            2 3 36936
+echo           2 4 35792
+forktest       2 5 17592
+grep           2 6 40384
+init           2 7 36248
+kill           2 8 35728
+ln             2 9 35528
+ls             2 10 39072
+mkdir          2 11 35776
+rm             2 12 35760
+sh             2 13 58792
+stressfs       2 14 36648
+usertests      2 15 202656
+grind          2 16 52200
+wc             2 17 37928
+zombie         2 18 35120
+logstress      2 19 37712
+forphan        2 20 36528
+dorphan        2 21 35976
+sync           2 22 35192
+hello          2 23 35432
+mark           2 24 35592
+ttest          2 25 48448
+ftest          2 26 55552
+ptest          2 27 56248
+atest          2 28 55848
 console        3 29 0
 report.txt     2 30 57
 inbox.txt      2 31 38
 important.txt  2 32 41
 inbox_cmd.txt  2 33 18
 safe           1 34 32
-@866da089@
+@68696bf6@
+$ 
