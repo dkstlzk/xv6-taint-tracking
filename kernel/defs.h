@@ -185,6 +185,9 @@ void            virtio_disk_intr(void);
 // taint.c (member D)
 int             in_safe(struct inode*);
 int             ip_untrusted(struct inode*);
+void            audit_init(void);
+void            audit_log(int event_type, int pid, int related_pid, uint inum, int reason);
+int             audit_getlog(uint64 uaddr, int max_events);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x) / sizeof((x)[0]))

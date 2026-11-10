@@ -25,12 +25,6 @@ Compiled for Task B-13, C-18, and D-14 (Milestone M8). Verified against measured
 - **On-Disk Compatibility**: `struct dinode` size remains exactly 64 bytes (`_Static_assert(sizeof(struct dinode) == 64)`), preserving inodes per block (`IPB = 16`). `mkfs/mkfs.c` zeroes all dinodes on initialization without code alterations.
 - **Born-Untrusted Invariant**: New regular files created by a tainted process are born untrusted (`ip->untrusted = 1`). Existing files opened for write are never re-labeled; attempts to write clean files are blocked (Invariant I2).
 - **Redirection Behavior (FP-3)**: Under stock shell redirection `cat /inbox.txt > /target.txt`, the clean child truncates `/target.txt` at `sys_open` before `cat` executes and reads the marked input. While the write-down is denied (`cat: write error`), pre-existing file content is truncated by the clean child. Appending (`>>`) preserves existing contents.
-- **False-Positive Classification Table (FP-1 through FP-5)**:
-  - FP-1: Reading untrusted files taints caller process (expected latching design).
-  - FP-2: Writing untrusted bytes into pipe sets high watermark tainted_hi (expected safety design).
-  - FP-3: Shell redirection truncates before cat reads marked input (stock shell open semantics; write-down denied).
-  - FP-4: Clean child creates untrusted file when parent is tainted (born-untrusted invariant).
-  - FP-5: Interactive shell tainted after cat /inbox.txt | sh (expected process taint permanence).
 - **Crash Recovery & Abrupt Reboot**: Taint persistence survives abrupt QEMU termination (SIGKILL without explicit user `sync`) once `sys_marktaint` completes, because `iupdate(ip)` writes synchronously through the log.
 
 ---

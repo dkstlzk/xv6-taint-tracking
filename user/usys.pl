@@ -46,3 +46,4 @@ entry("sync");
 entry("marktaint");
 entry("istainted");
 entry("hello");
+entry("gettaintlog");

@@ -52,6 +52,7 @@ kexec(char *path, char **argv)
   if (p->tainted && !in_safe(ip)) {
     iput(ip);
     end_op();
+    audit_log(5, p->pid, 0, 0, 0); // AUDIT_EXEC_DENIED
     printk("taint: exec refused for pid %d\n", p->pid);
     return -1;
   }
@@ -60,8 +61,10 @@ kexec(char *path, char **argv)
 
   // Task D-05: post-lock type and untrusted checks
   if (p->tainted && (ip->type != T_FILE || ip_untrusted(ip))) {
+    uint target_inum = ip->inum;
     iunlockput(ip);
     end_op();
+    audit_log(5, p->pid, 0, target_inum, 0); // AUDIT_EXEC_DENIED
     printk("taint: exec refused for pid %d\n", p->pid);
     return -1;
   }

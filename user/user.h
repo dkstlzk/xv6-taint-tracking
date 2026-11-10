@@ -28,6 +28,7 @@ int sync(void);
 int marktaint(char*);
 int istainted(void);
 int hello(int, int, int, int);
+int gettaintlog(void *, int);
 
 // ulib.c
 int stat(const char *, struct stat *);

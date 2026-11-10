@@ -147,6 +147,9 @@ piperead(struct pipe *pi, uint64 addr, int n)
     pi->nread++;
   }
   if (i > 0 && taints) {
+    if (!pr->tainted) {
+      audit_log(3, pr->pid, 0, 0, 0); // AUDIT_PIPE_PROPAGATION
+    }
     pr->tainted = 1;
   }
   wakeup(&pi->nwrite); //DOC: piperead-wakeup

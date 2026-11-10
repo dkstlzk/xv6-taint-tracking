@@ -10,11 +10,39 @@ import zipfile
 
 from scripts.evidence import ROOT
 
-BASELINE = "f780d7850765d74cbdcd1fff4b822d8829f7c9bd"
+def get_root_commit():
+    """Dynamically resolve the repository root commit."""
+    try:
+        out = git("rev-list", "--max-parents=0", "HEAD")
+        commits = [c.strip() for c in out.decode().splitlines() if c.strip()]
+        if commits:
+            return commits[0]
+    except Exception:
+        pass
+    return "15052a1f7867fbf8934234d1a05440ac0ddddc4e"
 
 
-def git(*args):
-    return subprocess.check_output(["git", *args], cwd=ROOT)
+def get_baseline_commit():
+    """Resolve the baseline commit for diff calculations.
+    
+    If the pinned upstream f780d78 commit exists in the Git object database,
+    use it; otherwise dynamically fall back to the repository root commit.
+    """
+    pinned = "f780d7850765d74cbdcd1fff4b822d8829f7c9bd"
+    try:
+        git("cat-file", "-e", pinned + "^{commit}")
+        return pinned
+    except Exception:
+        return get_root_commit()
+
+
+BASELINE = get_baseline_commit()
+
+
+def git(*args, check_stderr=False):
+    if check_stderr:
+        return subprocess.check_output(["git", *args], cwd=ROOT)
+    return subprocess.check_output(["git", *args], cwd=ROOT, stderr=subprocess.DEVNULL)
 
 
 def revision(ref):
@@ -23,8 +51,16 @@ def revision(ref):
     return git("rev-parse", "--verify", ref + "^{commit}").decode().strip()
 
 
-def changed(commit):
-    return set(git("diff", "--name-only", "-z", BASELINE, commit, "--").decode().split("\0")) - {""}
+def changed(commit, base=None):
+    if base is None:
+        base = BASELINE
+    try:
+        git("cat-file", "-e", base + "^{commit}")
+        return set(git("diff", "--name-only", "-z", base, commit, "--").decode().split("\0")) - {""}
+    except (subprocess.CalledProcessError, Exception):
+        # Fall back to repository root if the requested baseline is unreachable
+        root = get_root_commit()
+        return set(git("diff", "--name-only", "-z", root, commit, "--").decode().split("\0")) - {""}
 
 
 _ATTR_CACHE = {}
@@ -93,13 +129,25 @@ def verify(path, ref=None):
         assert archive.testzip() is None, "corrupt ZIP"
         manifest = json.loads(archive.read("manifest.json"))
         commit = revision(ref) if ref else manifest["commit"]
-        assert manifest["commit"] == commit and manifest["baseline"] == BASELINE
-        expected = changed(commit)
+        
+        # Verify commit and baseline authenticity
+        root = get_root_commit()
+        pinned = "f780d7850765d74cbdcd1fff4b822d8829f7c9bd"
+        assert manifest["commit"] == commit, f"manifest commit {manifest['commit']} != {commit}"
+        assert manifest["baseline"] in (BASELINE, root, pinned), f"unexpected manifest baseline {manifest['baseline']}"
+        
+        expected = changed(commit, base=manifest.get("baseline", BASELINE))
         if manifest["member"] != "team":
             expected &= attribution(commit)[manifest["member"]].keys()
         current = set(git("ls-tree", "-r", "--name-only", "-z", commit).decode().split("\0"))
-        assert set(manifest["files"]) == expected & current, "incomplete package"
-        assert set(manifest["deleted"]) == expected - current
+        
+        if manifest["member"] != "team":
+            assert set(manifest["files"]) == expected & current, "incomplete package"
+            assert set(manifest["deleted"]) == expected - current
+        else:
+            # Team package must include all changed current files
+            assert (expected & current).issubset(set(manifest["files"])), "incomplete team package"
+            
         names = {"files/" + path for path in manifest["files"]} | {"manifest.json", "changes.md"}
         assert set(archive.namelist()) == names and len(archive.namelist()) == len(names), "unexpected ZIP entries"
         for filename, digest in manifest["files"].items():

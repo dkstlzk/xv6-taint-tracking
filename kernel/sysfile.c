@@ -212,6 +212,7 @@ sys_unlink(void)
   uint off;
 
   if (myproc()->tainted) {
+    audit_log(4, myproc()->pid, 0, 0, 0); // AUDIT_UNLINK_DENIED
     printk("taint: unlink refused for pid %d\n", myproc()->pid);
     return -1;
   }
@@ -265,13 +266,14 @@ bad:
   return -1;
 }
 
-static struct inode *
+  static struct inode *
 create(char *path, short type, short major, short minor)
 {
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
   if (myproc()->tainted && type != T_FILE) {
+    audit_log(6, myproc()->pid, 0, 0, 0); // AUDIT_WRITE_DOWN_DENIED
     printk("taint: write refused for pid %d\n", myproc()->pid);
     return 0;
   }
@@ -386,8 +388,10 @@ sys_open(void)
   // Task C-07: sys_open write gate (must precede itrunc)
   if (myproc()->tainted && ip->type == T_FILE && !ip->untrusted &&
       (omode & (O_WRONLY | O_RDWR | O_TRUNC))) {
+    uint target_inum = ip->inum;
     iunlockput(ip);
     end_op();
+    audit_log(6, myproc()->pid, 0, target_inum, 0); // AUDIT_WRITE_DOWN_DENIED
     printk("taint: write refused for pid %d\n", myproc()->pid);
     return -1;
   }

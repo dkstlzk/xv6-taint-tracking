@@ -118,6 +118,17 @@ sys_istainted(void)
 }
 
 uint64
+sys_gettaintlog(void)
+{
+  uint64 uaddr;
+  int max_events;
+
+  argaddr(0, &uaddr);
+  argint(1, &max_events);
+  return audit_getlog(uaddr, max_events);
+}
+
+uint64
 sys_hello(void)
 {
   int a, b, c, d;

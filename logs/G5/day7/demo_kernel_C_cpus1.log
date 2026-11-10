@@ -1,0 +1,35 @@
+================================================================
+EVIDENCE HEADER
+================================================================
+COMMIT:       f4cdb8b3dbc3a02dfc6976bd77bd3c8a34151e96
+DATE:         2026-11-02T11:12:44+05:30
+CPUS:         1
+GCC_VERSION:  riscv64-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+QEMU_VERSION: QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.18)
+COMMAND:      kernel demo Run C
+================================================================
+SOURCE_DIFF_SHA256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+SOURCE_DIRTY: False
+KERNEL_TREE: /home/parneeka/Desktop/OS_proj/demo/os-project
+KERNEL_SHA256: d65af5f1ccd4a3a08052517254536b9cd6a6a2f4d9cb8f6d3fd28fc711ad03ce
+BASELINE_REVISION: current project
+RESULT: PASS
+
+RAW TRANSCRIPT
+
+xv6 kernel is booting
+
+init: starting sh
+$ echo protected > /important.txt; echo @12ee8e44@
+@12ee8e44@
+echo rm /important.txt > /inbox_cmd.txt; echo @db5ac09d@
+$ @db5ac09d@
+mark /inbox_cmd.txt; echo @7c304bac@
+$ @7c304bac@
+cat /inbox_cmd.txt | sh; echo @d82e7821@
+$ $ taint: exec refused for pid 13
+exec rm failed
+$ @d82e7821@
+cat /important.txt; echo @39bb2bdf@
+$ protected
+@39bb2bdf@

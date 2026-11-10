@@ -122,6 +122,9 @@ fileread(struct file *f, uint64 addr, int n)
     if ((r = readi(f->ip, 1, addr, f->off, n)) > 0) {
       f->off += r;
       if (f->ip->untrusted) {
+        if (!myproc()->tainted) {
+          audit_log(1, myproc()->pid, 0, f->ip->inum, 0); // AUDIT_PROCESS_TAINTED
+        }
         myproc()->tainted = 1;
       }
     }
@@ -164,8 +167,10 @@ filewrite(struct file *f, uint64 addr, int n)
       begin_op();
       ilock(f->ip);
       if (myproc()->tainted && f->ip->type == T_FILE && !f->ip->untrusted) {
+        uint target_inum = f->ip->inum;
         iunlock(f->ip);
         end_op();
+        audit_log(6, myproc()->pid, 0, target_inum, 0); // AUDIT_WRITE_DOWN_DENIED
         printk("taint: write refused for pid %d\n", myproc()->pid);
         return -1;
       }

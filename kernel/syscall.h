@@ -24,3 +24,4 @@
 #define SYS_marktaint  23
 #define SYS_istainted  24
 #define SYS_hello      25
+#define SYS_gettaintlog 26

@@ -159,7 +159,9 @@ PROJECT_UPROGS=\
 	$U/_ttest\
 	$U/_ftest\
 	$U/_ptest\
-	$U/_atest
+	$U/_atest\
+	$U/_taintlog\
+	$U/_audtest
 
 UPROGS=$(STOCK_UPROGS) $(PROJECT_UPROGS)
 

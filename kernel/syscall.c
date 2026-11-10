@@ -106,6 +106,7 @@ extern uint64 sys_sync(void);
 extern uint64 sys_marktaint(void);
 extern uint64 sys_istainted(void);
 extern uint64 sys_hello(void);
+extern uint64 sys_gettaintlog(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -136,6 +137,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_marktaint] = sys_marktaint,
   [SYS_istainted] = sys_istainted,
   [SYS_hello]     = sys_hello,
+  [SYS_gettaintlog] = sys_gettaintlog,
   // clang-format on
 };
 

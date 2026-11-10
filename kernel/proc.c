@@ -301,6 +301,9 @@ kfork(void)
 
   acquire(&np->lock);
   np->tainted = p->tainted;
+  if (p->tainted) {
+    audit_log(2, np->pid, p->pid, 0, 0); // AUDIT_FORK_PROPAGATION
+  }
   np->state = RUNNABLE;
   release(&np->lock);
 
