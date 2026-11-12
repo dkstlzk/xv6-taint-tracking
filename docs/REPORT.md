@@ -40,19 +40,28 @@ Autonomous AI agents executing operating system commands via Large Language Mode
 
 The kernel guarantees five core security invariants across all execution paths:
 
-### Invariant I1: Irreversible Process-Granularity Taint
-Each process control block (`struct proc`) carries an integer flag `p->tainted`. Reading $k > 0$ bytes from an untrusted inode unconditionally transitions the caller to tainted:
-$$\text{Read}(ip, k) \land (ip.\text{untrusted} = 1) \land (k > 0) \implies p.\text{tainted} \leftarrow 1$$
+### Invariant I1: Irreversible Process-Granularity Taint & Partial-Copy Tracking
+Each process control block (`struct proc`) carries an integer flag `p->tainted`. Reading $k > 0$ bytes from an untrusted inode into user memory unconditionally transitions the caller to tainted:
+$$\text{Copied}(ip, k) \land (ip.\text{untrusted} = 1) \land (k > 0) \implies p.\text{tainted} \leftarrow 1$$
 Once set, $p.\text{tainted}$ is monotonically non-decreasing over the lifetime of the process. In `kfork()`, child processes inherit the exact taint state of the parent under `p->lock`.
+
+**Discovered Partial-Read Taint Bug & Fix**:
+In the initial implementation, `fileread()` checked only the final return value `r > 0` from `readi()`. However, `copyout()` in `kernel/vm.c` iterates page-by-page (`PGSIZE = 4096`) and `readi()` in `kernel/fs.c` iterates block-by-block (`BSIZE = 1024`). When a `read()` targeting an untrusted file succeeded on an earlier page or disk block and then faulted on a subsequent unmapped/read-only boundary, `readi()` overwrote `tot = -1` and returned `-1` even though untrusted bytes had already reached user memory—leaving the caller untainted (`p->tainted == 0`).
+To close this gap:
+- `copyout_partial()` (`kernel/vm.c`), `either_copyout_partial()` (`kernel/proc.c`), and `readi_partial()` (`kernel/fs.c`) track the exact byte count transferred into user memory via an output `copied` counter regardless of whether a later page or block faults and forces `-1`.
+- `fileread()` (`kernel/file.c`) latches `myproc()->tainted = 1` (and emits `AUDIT_PROCESS_TAINTED`) whenever `copied > 0` on an untrusted inode—even if `read()` returns `-1`—while reads transferring zero bytes (`n == 0`, EOF, or immediate invalid-pointer failures with `copied == 0`) leave a clean process clean.
 
 ### Invariant I2: Strict Write-Down Prevention
 A tainted process cannot mutate any clean regular disk file (`ip->type == T_FILE \land ip.\text{untrusted} == 0`). Enforcement intercepts write attempts at three distinct layers:
-- `filewrite()`: Denies writing untrusted data to clean files, returning $-1$ and logging `taint: write refused for pid %d\n`.
+- `filewrite()`: Denies writing untrusted data to clean files, returning $-1$ and logging `TAINT_REFUSE_WRITE` (`"taint: write refused for pid %d\n"`).
 - `sys_open()`: Denies `O_WRONLY`, `O_RDWR`, or `O_TRUNC` flags on clean files by tainted callers *before* `itrunc()` can empty existing blocks.
 - `sys_unlink()` & `sys_link()`: Denies directory unlinking and hard-link creation, preventing name laundering.
 
-### Invariant I3: Inode Persistence & Born-Untrusted Lifecycle
-On-disk `struct dinode` repopulates one unused block address to store `uint untrusted`. Under the 64-byte Option C format (`NDIRECT 11`, 1 indirect block), inode size and block alignment remain untouched ($\text{sizeof}(\text{struct dinode}) = 64\text{ bytes}$, $\text{IPB} = 16$). Any newly created regular file by a tainted process is marked born-untrusted ($ip.\text{untrusted} \leftarrow 1$) during `ialloc()`. Taint is committed durably to the disk log via `iupdate(ip)`. When an unlinked inode is freed, its fields are cleared, preventing phantom taint on reallocation (confirmed via T13).
+### Invariant I3: Inode Persistence, Reduced Max File Size & Disk Image Rebuild
+On-disk `struct dinode` repopulates one direct block address slot to store `uint untrusted`. Under the 64-byte Option C format (`NDIRECT 11` instead of stock `12`, plus `1` indirect block), inode size and block alignment remain untouched ($\text{sizeof}(\text{struct dinode}) = 64\text{ bytes}$, $\text{IPB} = 16$).
+- **Reduced Maximum File Size**: `MAXFILE` drops from stock `268` blocks (`12 + 256 = 274,432` bytes) to `267` blocks (`11 + 256 = 273,408` bytes), a reduction of exactly `1` block (`1024` bytes).
+- **Disk Image Incompatibility**: Because the on-disk `struct dinode` layout changed (`NDIRECT 11` and `untrusted` field), pre-existing or stock xv6 `fs.img` disk images are incompatible and **must be rebuilt** (`make clean && make fs.img`) via `mkfs/mkfs`.
+- **Lifecycle & Crash Safety**: Any newly created regular file by a tainted process is marked born-untrusted ($ip.\text{untrusted} \leftarrow 1$) during `create()`/`ialloc()`. Taint is committed durably to the disk log via `iupdate(ip)`. When an unlinked inode is freed, its fields are cleared, preventing phantom taint on reallocation (confirmed via T13).
 
 ---
 
@@ -73,26 +82,24 @@ Let $n_{\text{write}}$ be the cumulative bytes written to the pipe, $n_{\text{re
 ### Concurrency Safety Proof
 Because $n_{\text{write}} - n_{\text{read}} \le \text{PIPESIZE} = 512 \ll 2^{31}$, signed 32-bit modular subtraction eliminates integer wrap-around vulnerabilities during active communication. Any tainted byte entered into the buffer guarantees that $\Delta > 0$ for all readers until that byte is consumed.
 
-**Conservative Trade-off**: If a clean writer inserts bytes *before* an unread tainted byte, a reader reading those clean bytes will latch tainted early. This intentional false-positive preserves system safety and avoids race conditions under multicore execution (`CPUS=3`).
+**Conservative Trade-off**: Because tainting tracks a single monotonic high-watermark (`tainted_hi`) rather than per-byte labels, if clean bytes sit ahead of an unread tainted byte in the FIFO buffer (e.g., a clean writer writes before a tainted writer, or both interleave), a reader reading those clean bytes satisfies $(H_{\text{taint}} - n_{\text{read}}) > 0$ and latches tainted early. Conversely, zero-byte pipe reads and immediate failed `copyout` transfers (`i <= 0`) leave clean readers clean. This intentional conservative over-approximation preserves safety and eliminates lock/race hazards under multicore execution (`CPUS=3`).
 
 ---
 
-## 4. Path-Level Execution Containment (`/safe`)
+## 4. Path-Level Execution Containment (`TAINT_SAFE_DIR` = `/safe`)
 
-Tainted processes are forbidden from executing arbitrary binaries outside the designated `/safe` directory:
-- `in_safe(struct inode *ip)` resolves the parent directory inode of `/safe` (inode 3) and verifies direct child membership via directory scanning. Special entries (`.`, `..`), root (`/`), and `/safe` itself are disallowed.
+Tainted processes are forbidden from executing arbitrary binaries outside the centralized safe directory (`TAINT_SAFE_DIR` in `kernel/taint.h`, default `"/safe"`):
+- `in_safe(struct inode *ip)` dynamically resolves the `/safe` directory inode via `namei(TAINT_SAFE_DIR)` (not a hardcoded inode number or string path prefix) and scans its directory entries to confirm `ip->inum` and `ip->dev` match a direct child entry. Special directory entries (`.`, `..`), root (`/`), subdirectories inside `/safe`, and `/safe` itself are disallowed. Hard links inside `/safe` resolve via their target `inum`.
 - **Pre-lock & Post-lock Verification**:
   - `exec.c` verifies `/safe` containment before acquiring inode sleeplocks, eliminating lock inversion deadlocks.
-  - After loading the ELF header under lock, the kernel validates that the binary itself is clean (`!ip_untrusted(ip)`), preventing attackers from copying an untrusted binary into `/safe` and executing it (OH3).
+  - After acquiring `ilock(ip)`, the kernel validates that the target is a regular file and clean (`ip->type == T_FILE && !ip_untrusted(ip)`), preventing attackers from copying or creating an untrusted ELF binary inside `/safe` and executing it (OH3/A16).
 
 ---
 
-## 5. Experimental Verification & Release Evidence
+## 5. Configuration Coupling & Verification
 
-The implementation was systematically verified against 53 formal requirement rows across 7 gates:
-- **Clean Regressions**: 3 consecutive clean-build runs on both `CPUS=1` and `CPUS=3` with 0 failures and 0 inconclusive outcomes.
-- **Stock Compatibility**: Full stock `usertests` executed cleanly on the patched kernel (`ALL TESTS PASSED`).
-- **Persistence Testing**: Multi-boot durability verified using random 96-bit cryptographic tokens across standard reboots, fresh-disk negative controls, and abrupt SIGKILL terminations without explicit user `sync`.
-- **Adversarial Evaluation**: 9 attack scenarios (`atest.c`) blocked with explicit canonical log verification.
-- **Stress Testing**: 320 independent multi-core concurrency stress trials executed with zero false negatives observed.
+- **Centralized & Parameterized Settings**: Policy path (`TAINT_SAFE_DIR`) and canonical kernel refusal templates (`TAINT_REFUSE_*`) live in `kernel/taint.h` (mirrored by `SAFE_DIR` in `agent_lab/xv6agent/config.py`), user test constants live as `#define` macros in `user/*.c`, and `scripts/stress_campaign.py` accepts `--cpus` and `--timeout`. Coupled hardware/layout/buffer limits (RAM `-m`/`PHYSTOP`, `struct dinode`/`FSSIZE`/`fs.img`, `USERSTACK`, and `PIPESIZE`) are documented in [LIMITS.md](../LIMITS.md).
+- **Experimental Verification**:
+  - Guest verification (`ttest`, `ftest`, `ptest`, `atest`, `audtest`) passes across both `CPUS=1` and `CPUS=3`, including `T3b`–`T3d` covering zero-byte reads, non-copying invalid pointers, and partial copy failures across page and filesystem-block boundaries.
+  - Full host/bridge Python suite passes (`39/39` tests) alongside Gate G1–G7b campaigns, stock `usertests` regressions, multi-boot persistence checks, and `CPUS=3` concurrency stress trials.
 

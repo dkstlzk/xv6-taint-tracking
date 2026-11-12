@@ -647,18 +647,30 @@ killed(struct proc *p)
 }
 
 // Copy to either a user address, or kernel address,
+// depending on user_dst, recording bytes copied in *copied (if non-null).
+// Returns 0 on success, -1 on error.
+int
+either_copyout_partial(int user_dst, uint64 dst, void *src, uint64 len,
+                       uint64 *copied)
+{
+  struct proc *p = myproc();
+  if (user_dst) {
+    return copyout_partial(p->pagetable, p->sz, dst, src, len, copied);
+  } else {
+    memmove((char *)dst, src, len);
+    if (copied)
+      *copied = len;
+    return 0;
+  }
+}
+
+// Copy to either a user address, or kernel address,
 // depending on usr_dst.
 // Returns 0 on success, -1 on error.
 int
 either_copyout(int user_dst, uint64 dst, void *src, uint64 len)
 {
-  struct proc *p = myproc();
-  if (user_dst) {
-    return copyout(p->pagetable, p->sz, dst, src, len);
-  } else {
-    memmove((char *)dst, src, len);
-    return 0;
-  }
+  return either_copyout_partial(user_dst, dst, src, len, 0);
 }
 
 // Copy from either a user address, or kernel address,

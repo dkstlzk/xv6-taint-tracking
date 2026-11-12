@@ -12,6 +12,7 @@
 #include "file.h"
 #include "stat.h"
 #include "proc.h"
+#include "taint.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -118,15 +119,17 @@ fileread(struct file *f, uint64 addr, int n)
       return -1;
     r = devsw[f->major].read(1, addr, n);
   } else if (f->type == FD_INODE) {
+    uint copied = 0;
     ilock(f->ip);
-    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0) {
+    r = readi_partial(f->ip, 1, addr, f->off, n, &copied);
+    if (r > 0) {
       f->off += r;
-      if (f->ip->untrusted) {
-        if (!myproc()->tainted) {
-          audit_log(1, myproc()->pid, 0, f->ip->inum, 0); // AUDIT_PROCESS_TAINTED
-        }
-        myproc()->tainted = 1;
+    }
+    if (copied > 0 && f->ip->untrusted) {
+      if (!myproc()->tainted) {
+        audit_log(1, myproc()->pid, 0, f->ip->inum, 0); // AUDIT_PROCESS_TAINTED
       }
+      myproc()->tainted = 1;
     }
     iunlock(f->ip);
   } else {
@@ -171,7 +174,7 @@ filewrite(struct file *f, uint64 addr, int n)
         iunlock(f->ip);
         end_op();
         audit_log(6, myproc()->pid, 0, target_inum, 0); // AUDIT_WRITE_DOWN_DENIED
-        printk("taint: write refused for pid %d\n", myproc()->pid);
+        printk(TAINT_REFUSE_WRITE, myproc()->pid);
         return -1;
       }
       if ((r = writei(f->ip, 1, addr + i, f->off, n1)) > 0)

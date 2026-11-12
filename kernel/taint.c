@@ -8,8 +8,9 @@
 #include "file.h"
 #include "proc.h"
 #include "defs.h"
+#include "taint.h"
 
-// in_safe checks if the given inode is a direct child of /safe directory.
+// in_safe checks if the given inode is a direct child of TAINT_SAFE_DIR (/safe).
 // Preconditions: caller holds NO lock on ip.
 int
 in_safe(struct inode *ip)
@@ -19,8 +20,8 @@ in_safe(struct inode *ip)
   uint off;
   int found = 0;
 
-  if ((dp = namei("/safe")) == 0)
-    return 0; // no /safe: nothing is safe
+  if ((dp = namei(TAINT_SAFE_DIR)) == 0)
+    return 0; // no safe directory: nothing is safe
 
   ilock(dp);
   if (dp->type == T_DIR && dp->dev == ip->dev && dp->inum != ip->inum) {

@@ -10,6 +10,7 @@
 #include "sleeplock.h"
 #include "fs.h"
 #include "file.h"
+#include "taint.h"
 
 static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
 
@@ -53,7 +54,7 @@ kexec(char *path, char **argv)
     iput(ip);
     end_op();
     audit_log(5, p->pid, 0, 0, 0); // AUDIT_EXEC_DENIED
-    printk("taint: exec refused for pid %d\n", p->pid);
+    printk(TAINT_REFUSE_EXEC, p->pid);
     return -1;
   }
 
@@ -65,7 +66,7 @@ kexec(char *path, char **argv)
     iunlockput(ip);
     end_op();
     audit_log(5, p->pid, 0, target_inum, 0); // AUDIT_EXEC_DENIED
-    printk("taint: exec refused for pid %d\n", p->pid);
+    printk(TAINT_REFUSE_EXEC, p->pid);
     return -1;
   }
 

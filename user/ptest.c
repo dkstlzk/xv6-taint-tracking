@@ -1,8 +1,16 @@
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "kernel/fcntl.h"
+#include "kernel/taint.h"
 #include "user/user.h"
 #include "user/tlib.h"
+
+#define MIXED_PIPE_CHUNK     5
+#define STRESS_WRITER_BYTES  1024
+#define STRESS_TOTAL_BYTES   (2 * STRESS_WRITER_BYTES)
+#define STRESS_READ_CHUNK    127
+#define STRESS_MAX_TRIALS    1000
+#define SAFE_PTEST_BIN       TAINT_SAFE_DIR "/ptest"
 
 static uint random_state = 1;
 
@@ -71,39 +79,41 @@ static void
 mixed_pipe(void)
 {
   int fds[2], status = -1;
-  require(pipe(fds) == 0 && write(fds[1], "CCCCC", 5) == 5);
+  require(pipe(fds) == 0 && write(fds[1], "CCCCC", MIXED_PIPE_CHUNK) == MIXED_PIPE_CHUNK);
   int child = fork();
   require(child >= 0);
   if (child == 0) {
     close(fds[0]);
     taint();
-    require(write(fds[1], "TTTTT", 5) == 5);
+    require(write(fds[1], "TTTTT", MIXED_PIPE_CHUNK) == MIXED_PIPE_CHUNK);
     close(fds[1]);
     exit(0);
   }
   require(wait(&status) == child && status == 0);
   close(fds[1]);
-  char bytes[5];
-  CHECK("T8", "clean prefix below watermark conservatively taints", read(fds[0], bytes, 5) == 5 && memcmp(bytes, "CCCCC", 5) == 0 && istainted() == 1);
+  char bytes[MIXED_PIPE_CHUNK];
+  CHECK("T8", "clean prefix below watermark conservatively taints",
+        read(fds[0], bytes, MIXED_PIPE_CHUNK) == MIXED_PIPE_CHUNK &&
+        memcmp(bytes, "CCCCC", MIXED_PIPE_CHUNK) == 0 && istainted() == 1);
   close(fds[0]);
 }
 
 static void
 exec_checks(void)
 {
-  mkdir("/safe");
-  unlink("/safe/ptest");
-  require(link("/ptest", "/safe/ptest") == 0);
+  mkdir(TAINT_SAFE_DIR);
+  unlink(SAFE_PTEST_BIN);
+  require(link("/ptest", SAFE_PTEST_BIN) == 0);
   taint();
   char *outside[] = {"echo", 0};
   CHECK("T10", "exec outside safe refused", exec("/echo", outside) == -1);
-  CHECK("T20", "safe directory self-match refused", exec("/safe", outside) == -1);
+  CHECK("T20", "safe directory self-match refused", exec(TAINT_SAFE_DIR, outside) == -1);
   CHECK("T20", "root directory refused", exec("/", outside) == -1);
   int child = fork(), status = -1;
   require(child >= 0);
   if (child == 0) {
     char *args[] = {"ptest", "exec-check", 0};
-    exec("/safe/ptest", args);
+    exec(SAFE_PTEST_BIN, args);
     exit(2);
   }
   require(wait(&status) == child);
@@ -125,7 +135,7 @@ stress_trial(void)
       close(fds[0]);
       if (untrusted) taint();
       if ((seed >> index) & 1) pause(1);
-      char bytes[1024];
+      char bytes[STRESS_WRITER_BYTES];
       memset(bytes, untrusted ? 'T' : 'C', sizeof(bytes));
       require(write(fds[1], bytes, sizeof(bytes)) == sizeof(bytes));
       close(fds[1]);
@@ -133,12 +143,12 @@ stress_trial(void)
     }
   }
   close(fds[1]);
-  char order[2049], bytes[127];
+  char order[STRESS_TOTAL_BYTES + 1], bytes[STRESS_READ_CHUNK];
   int total = 0, clean = 0, marked = 0, false_negatives = 0, valid = 1;
   for (;;) {
     int count = read(fds[0], bytes, 1 + next_random() % sizeof(bytes));
     if (count == 0) break;
-    if (count < 0 || total + count > 2048) { valid = 0; break; }
+    if (count < 0 || total + count > STRESS_TOTAL_BYTES) { valid = 0; break; }
     for (int index = 0; index < count; index++) {
       order[total++] = bytes[index];
       if (bytes[index] == 'T') {
@@ -154,7 +164,8 @@ stress_trial(void)
   printf("STRESS seed=%d first=%s bytes=%d clean=%d tainted=%d false_negatives=%d order=%s\n",
          seed, first ? "T" : "C", total, clean, marked, false_negatives, order);
   CHECK("STRESS", "two concurrent long writers and clean reader; zero false negatives observed",
-        valid && statuses[0] == 0 && statuses[1] == 0 && clean == 1024 && marked == 1024 && false_negatives == 0 && istainted() == 1);
+        valid && statuses[0] == 0 && statuses[1] == 0 && clean == STRESS_WRITER_BYTES &&
+        marked == STRESS_WRITER_BYTES && false_negatives == 0 && istainted() == 1);
 }
 
 int
@@ -165,7 +176,7 @@ main(int argc, char **argv)
   if (argc == 4 && strcmp(argv[1], "stress") == 0) {
     int trials = atoi(argv[2]);
     random_state = atoi(argv[3]);
-    require(trials > 0 && trials <= 1000);
+    require(trials > 0 && trials <= STRESS_MAX_TRIALS);
     for (int trial = 0; trial < trials; trial++) {
       printf("TRIAL %d seed=%d\n", trial + 1, random_state);
       run_in_child(stress_trial);

@@ -4,6 +4,10 @@
 #include "user/user.h"
 #include "user/tlib.h"
 
+#define FTEST_READ_BUF     80
+#define INODE_REUSE_PROBES 8
+#define PERSIST_TOKEN_MAX  64
+
 static void
 require(int condition)
 {
@@ -25,7 +29,7 @@ put(char *path, char *text)
 static int
 equals(char *path, char *text)
 {
-  char data[80];
+  char data[FTEST_READ_BUF];
   int fd = open(path, O_RDONLY);
   if (fd < 0)
     return 0;
@@ -96,7 +100,7 @@ inode_reuse(void)
   require(stat("/reuse", &original) == 0);
   require(marktaint("/reuse") == 0 && unlink("/reuse") == 0);
   int reused = 0, clean = 1;
-  for (int index = 0; index < 8; index++) {
+  for (int index = 0; index < INODE_REUSE_PROBES; index++) {
     char path[] = "/reuse0";
     path[6] = '0' + index;
     unlink(path);
@@ -132,7 +136,7 @@ fp4(void)
 static void
 phase(char *mode, char *token)
 {
-  require(strlen(token) > 0 && strlen(token) < 64 && istainted() == 0);
+  require(strlen(token) > 0 && strlen(token) < PERSIST_TOKEN_MAX && istainted() == 0);
   if (strcmp(mode, "phase1-t2") == 0 || strcmp(mode, "phase1-kill") == 0) {
     put("/t2.txt", token);
     CHECK("T2-P1", "token created and marked", marktaint("/t2.txt") == 0);

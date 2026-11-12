@@ -2,8 +2,15 @@
 #include "kernel/stat.h"
 #include "kernel/fcntl.h"
 #include "kernel/syscall.h"
+#include "kernel/taint.h"
 #include "user/user.h"
 #include "user/tlib.h"
+
+#define ATEST_READ_BUF   32
+#define ATEST_COPY_CHUNK 512
+#define SAFE_RM_BIN      TAINT_SAFE_DIR "/rm"
+#define SAFE_ATEST_BIN   TAINT_SAFE_DIR "/atest"
+#define SAFE_EVIL_BIN    TAINT_SAFE_DIR "/evil"
 
 static void
 require(int condition)
@@ -22,7 +29,7 @@ put(char *path, char *text)
 static int
 equals(char *path, char *text)
 {
-  char data[32];
+  char data[ATEST_READ_BUF];
   int fd = open(path, O_RDONLY);
   if (fd < 0) return 0;
   int count = read(fd, data, sizeof(data));
@@ -94,8 +101,8 @@ attack_a3(void)
 static void
 attack_a4(void)
 {
-  mkdir("/safe"); unlink("/safe/rm"); taint();
-  CHECK("A4", "link gate blocks inserting rm into safe", link("/rm", "/safe/rm") == -1);
+  mkdir(TAINT_SAFE_DIR); unlink(SAFE_RM_BIN); taint();
+  CHECK("A4", "link gate blocks inserting rm into safe", link("/rm", SAFE_RM_BIN) == -1);
 }
 
 static void
@@ -111,14 +118,14 @@ attack_a8(void)
 static void
 attack_a9(void)
 {
-  mkdir("/safe"); unlink("/safe/atest");
-  require(link("/atest", "/safe/atest") == 0);
+  mkdir(TAINT_SAFE_DIR); unlink(SAFE_ATEST_BIN);
+  require(link("/atest", SAFE_ATEST_BIN) == 0);
   put("/victim.txt", "preserve"); taint();
   int child = fork();
   require(child >= 0);
   if (child == 0) {
     char *args[] = {"atest", "survive", 0};
-    exec("/safe/atest", args);
+    exec(SAFE_ATEST_BIN, args);
     exit(2);
   }
   int status = -1;
@@ -129,19 +136,19 @@ attack_a9(void)
 static void
 attack_a16(void)
 {
-  mkdir("/safe"); unlink("/safe/evil");
+  mkdir(TAINT_SAFE_DIR); unlink(SAFE_EVIL_BIN);
   int child = fork();
   require(child >= 0);
   if (child == 0) {
     taint();
     int source = open("/echo", O_RDONLY);
-    int target = open("/safe/evil", O_CREATE | O_WRONLY);
+    int target = open(SAFE_EVIL_BIN, O_CREATE | O_WRONLY);
     require(source >= 0 && target >= 0);
-    char bytes[512]; int count, total = 0;
+    char bytes[ATEST_COPY_CHUNK]; int count, total = 0;
     while ((count = read(source, bytes, sizeof(bytes))) > 0) {
       require(write(target, bytes, count) == count); total += count;
     }
-    require(count == 0 && total > 512);
+    require(count == 0 && total > ATEST_COPY_CHUNK);
     close(source); close(target); exit(0);
   }
   wait_ok(child);
@@ -149,12 +156,12 @@ attack_a16(void)
   require(child >= 0);
   if (child == 0) {
     char *args[] = {"evil", "valid-ELF-control", 0};
-    exec("/safe/evil", args); exit(2);
+    exec(SAFE_EVIL_BIN, args); exit(2);
   }
   wait_ok(child);
   taint();
   char *args[] = {"evil", 0};
-  CHECK("A16", "born-untrusted valid ELF refused inside safe", exec("/safe/evil", args) == -1);
+  CHECK("A16", "born-untrusted valid ELF refused inside safe", exec(SAFE_EVIL_BIN, args) == -1);
 }
 
 static void

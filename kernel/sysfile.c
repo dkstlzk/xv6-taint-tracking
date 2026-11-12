@@ -15,6 +15,7 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "fcntl.h"
+#include "taint.h"
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -127,7 +128,7 @@ sys_link(void)
   struct inode *dp, *ip;
 
   if (myproc()->tainted) {
-    printk("taint: link refused for pid %d\n", myproc()->pid);
+    printk(TAINT_REFUSE_LINK, myproc()->pid);
     return -1;
   }
 
@@ -213,7 +214,7 @@ sys_unlink(void)
 
   if (myproc()->tainted) {
     audit_log(4, myproc()->pid, 0, 0, 0); // AUDIT_UNLINK_DENIED
-    printk("taint: unlink refused for pid %d\n", myproc()->pid);
+    printk(TAINT_REFUSE_UNLINK, myproc()->pid);
     return -1;
   }
 
@@ -274,7 +275,7 @@ create(char *path, short type, short major, short minor)
 
   if (myproc()->tainted && type != T_FILE) {
     audit_log(6, myproc()->pid, 0, 0, 0); // AUDIT_WRITE_DOWN_DENIED
-    printk("taint: write refused for pid %d\n", myproc()->pid);
+    printk(TAINT_REFUSE_WRITE, myproc()->pid);
     return 0;
   }
 
@@ -392,7 +393,7 @@ sys_open(void)
     iunlockput(ip);
     end_op();
     audit_log(6, myproc()->pid, 0, target_inum, 0); // AUDIT_WRITE_DOWN_DENIED
-    printk("taint: write refused for pid %d\n", myproc()->pid);
+    printk(TAINT_REFUSE_WRITE, myproc()->pid);
     return -1;
   }
 

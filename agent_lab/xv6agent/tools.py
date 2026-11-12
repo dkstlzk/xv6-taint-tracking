@@ -37,7 +37,7 @@ def validate_path(path: str) -> None:
         if not re.match(r"^[A-Za-z0-9._-]+$", part):
             raise ValidationError(f"path component contains invalid characters: {part!r}")
     
-    if path not in config.ALLOWED_PATHS and not path.startswith("/safe/"):
+    if path not in config.ALLOWED_PATHS and not path.startswith(config.SAFE_DIR + "/"):
         raise ValidationError(f"path not in allowed exercise allowlist: {path!r}")
 
 def validate_action(action: dict) -> None:

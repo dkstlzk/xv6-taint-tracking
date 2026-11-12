@@ -505,15 +505,20 @@ stati(struct inode *ip, struct stat *st)
   st->size = ip->size;
 }
 
-// Read data from inode.
+// Read data from inode, recording bytes actually copied into *copied (if non-null).
 // Caller must hold ip->lock.
 // If user_dst==1, then dst is a user virtual address;
 // otherwise, dst is a kernel address.
 int
-readi(struct inode *ip, int user_dst, uint64 dst, uint off, uint n)
+readi_partial(struct inode *ip, int user_dst, uint64 dst, uint off, uint n,
+              uint *copied)
 {
   uint tot, m;
   struct buf *bp;
+  uint64 chunk_copied = 0;
+
+  if (copied)
+    *copied = 0;
 
   if (off > ip->size || off + n < off)
     return 0;
@@ -526,14 +531,30 @@ readi(struct inode *ip, int user_dst, uint64 dst, uint off, uint n)
       break;
     bp = bread(ip->dev, addr);
     m = min(n - tot, BSIZE - off % BSIZE);
-    if (either_copyout(user_dst, dst, bp->data + (off % BSIZE), m) == -1) {
+    chunk_copied = 0;
+    if (either_copyout_partial(user_dst, dst, bp->data + (off % BSIZE), m,
+                               &chunk_copied) == -1) {
       brelse(bp);
+      if (copied)
+        *copied = tot + (uint)chunk_copied;
       tot = -1;
       break;
     }
     brelse(bp);
   }
+  if (tot != (uint)-1 && copied)
+    *copied = tot;
   return tot;
+}
+
+// Read data from inode.
+// Caller must hold ip->lock.
+// If user_dst==1, then dst is a user virtual address;
+// otherwise, dst is a kernel address.
+int
+readi(struct inode *ip, int user_dst, uint64 dst, uint off, uint n)
+{
+  return readi_partial(ip, user_dst, dst, off, n, 0);
 }
 
 // Write data to inode.

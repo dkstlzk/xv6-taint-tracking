@@ -9,6 +9,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=8101)
     parser.add_argument("--trials", type=int, default=60)
+    parser.add_argument("--cpus", type=int, default=3)
+    parser.add_argument("--timeout", type=float, default=180.0)
     parser.add_argument("--load", action="store_true")
     parser.add_argument("--log", required=True)
     args = parser.parse_args()
@@ -16,7 +18,7 @@ if __name__ == "__main__":
     try:
         if args.load:
             worker = subprocess.Popen([sys.executable, "-c", "while True: sum(range(100000))"])
-        run(f"ptest stress {args.trials} {args.seed}", 3, args.log, timeout=180)
+        run(f"ptest stress {args.trials} {args.seed}", args.cpus, args.log, timeout=args.timeout)
         with open(args.log, "a") as log:
             log.write(f"\nHOST_CPU_LOAD_WORKERS: {int(args.load)}\n")
     finally:

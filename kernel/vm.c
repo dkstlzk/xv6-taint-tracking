@@ -338,42 +338,63 @@ uvmclear(pagetable_t pagetable, uint64 va)
   *pte &= ~PTE_U;
 }
 
-// Copy from kernel to user.
-// Copy len bytes from src to virtual address dstva in a given page table.
-// Return 0 on success, -1 on error.
+// Copy from kernel to user, recording total bytes copied into *copied (if non-null).
+// Return 0 on success, -1 on error (partial bytes may already be copied).
 int
-copyout(pagetable_t pagetable, uint64 psz, uint64 dstva, char *src, uint64 len)
+copyout_partial(pagetable_t pagetable, uint64 psz, uint64 dstva, char *src,
+                uint64 len, uint64 *copied)
 {
   uint64 n, va0, pa0;
+  uint64 tot = 0;
   pte_t *pte;
 
   while (len > 0) {
     va0 = PGROUNDDOWN(dstva);
-    if (va0 >= MAXVA)
+    if (va0 >= MAXVA) {
+      if (copied)
+        *copied = tot;
       return -1;
+    }
 
     pa0 = walkaddr(pagetable, va0);
     if (pa0 == 0) {
       if ((pa0 = vmfault(pagetable, psz, va0, 0)) == 0) {
+        if (copied)
+          *copied = tot;
         return -1;
       }
     }
 
     pte = walk(pagetable, va0, 0);
     // forbid copyout over read-only user text pages.
-    if ((*pte & PTE_W) == 0)
+    if ((*pte & PTE_W) == 0) {
+      if (copied)
+        *copied = tot;
       return -1;
+    }
 
     n = PGSIZE - (dstva - va0);
     if (n > len)
       n = len;
     memmove((void *)(pa0 + (dstva - va0)), src, n);
 
+    tot += n;
     len -= n;
     src += n;
     dstva = va0 + PGSIZE;
   }
+  if (copied)
+    *copied = tot;
   return 0;
+}
+
+// Copy from kernel to user.
+// Copy len bytes from src to virtual address dstva in a given page table.
+// Return 0 on success, -1 on error.
+int
+copyout(pagetable_t pagetable, uint64 psz, uint64 dstva, char *src, uint64 len)
+{
+  return copyout_partial(pagetable, psz, dstva, src, len, 0);
 }
 
 // Copy from user to kernel.
